@@ -10,6 +10,7 @@ from vector_memory.exceptions import (
     CoordinateValidationError,
     QueryError,
     StorageError,
+    ImmutableLayerError,
 )
 from vector_memory.persistence import GitPersistence
 from vector_memory.storage import MemoryLayer, StoredDecision
@@ -104,12 +105,8 @@ class VectorMemoryManager:
         if len(content.encode("utf-8")) > 100 * 1024:  # 100KB
             raise ValueError("content too large (max 100KB)")
 
-        # Check if coordinate already exists
-        existing_decision = self.get(coord)
-
-        # Validate immutability rules
+        # Get layer info for validation
         layer = MemoryLayer.get_layer(coord.z)
-        layer.validate_write(coord, existing_decision)
 
         # Create decision object
         timestamp = datetime.now()
@@ -131,6 +128,15 @@ class VectorMemoryManager:
 
             # Acquire lock before writing (timeout after 5 seconds)
             with FileLock(lock_path, timeout=5):
+                # CRITICAL: Check immutability AFTER acquiring lock to prevent race condition
+                # Read on-disk state (not index) to catch concurrent writes
+                existing_decision = None
+                if file_path.exists():
+                    existing_decision = StoredDecision.from_file(file_path)
+                
+                # Validate immutability rules based on actual on-disk state
+                layer.validate_write(coord, existing_decision)
+
                 # Atomic write: write to temp file, then rename
                 with tempfile.NamedTemporaryFile(
                     mode="w",
@@ -164,6 +170,9 @@ class VectorMemoryManager:
                 f"Lock timeout while storing decision at {coord.to_tuple()}. "
                 "Another process may be writing to this coordinate."
             )
+        except ImmutableLayerError:
+            # Re-raise immutability errors directly (don't wrap in StorageError)
+            raise
         except Exception as e:
             logger.error(f"Failed to store decision at {coord.to_tuple()}: {e}")
             raise StorageError(f"Failed to store decision at {coord.to_tuple()}: {e}") from e

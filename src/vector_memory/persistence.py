@@ -44,11 +44,25 @@ class GitPersistence:
 
         Raises:
             subprocess.CalledProcessError: If git commit fails
+            RuntimeError: If commit command succeeds but no commit was created
         """
         # Generate default message if none provided
         if message is None:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             message = f"vector-memory: sync {decision_count} decision(s) at {timestamp}"
+
+        # Get HEAD commit hash before attempting commit
+        try:
+            head_before = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=self.repo_path,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        except subprocess.CalledProcessError:
+            # No commits yet (new repo)
+            head_before = None
 
         try:
             subprocess.run(
@@ -58,7 +72,28 @@ class GitPersistence:
                 capture_output=True,
                 text=True,
             )
+            
+            # Verify commit was actually created
+            try:
+                head_after = subprocess.run(
+                    ["git", "rev-parse", "HEAD"],
+                    cwd=self.repo_path,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+                
+                if head_before is not None and head_after == head_before:
+                    raise RuntimeError(
+                        "git commit succeeded but HEAD did not change - commit may have failed silently"
+                    )
+            except subprocess.CalledProcessError as verify_error:
+                raise RuntimeError(
+                    f"Failed to verify commit was created: {verify_error}"
+                ) from verify_error
+            
             return True
+            
         except subprocess.CalledProcessError as e:
             # Check if it's just "nothing to commit"
             if "nothing to commit" in e.stdout or "nothing to commit" in e.stderr:

@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(if [ -d \"/home/frankbria/projects/codeframe-aco/specs/001-vector-memory/checklists\" ])",
+      "Bash(then find /home/frankbria/projects/codeframe-aco/specs/001-vector-memory/checklists -type f -name \"*.md\")",
+      "Bash(else echo \"NO_CHECKLISTS\")",
+      "Bash(fi)",
+      "Bash(git rev-parse:*)",
+      "Bash(if [ -f .gitignore ])",
+      "Bash(then echo \"EXISTS\")",
+      "Bash(else echo \"MISSING\")",
+      "mcp__morphllm-fast-apply__edit_file",
+      "Bash(python -m pytest:*)",
+      "Bash(python3:*)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(python -m black:*)",
+      "Bash(python -m ruff check:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Skill(bd-issue-tracking)",
+      "Bash(if [ -d \"/home/frankbria/projects/codeframe-aco/specs/002-beads-integration/checklists\" ])",
+      "Bash(then find /home/frankbria/projects/codeframe-aco/specs/002-beads-integration/checklists -type f -name \"*.md\")",
+      "Bash(pip install:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
