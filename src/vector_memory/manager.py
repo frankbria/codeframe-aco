@@ -235,6 +235,7 @@ class VectorMemoryManager:
         x_range: tuple[str, str] | None = None,
         y_range: tuple[int, int] | None = None,
         z_range: tuple[int, int] | None = None,
+        dag_order: dict[str, int] | None = None,
     ) -> list[StoredDecision]:
         """
         Query decisions within specified coordinate ranges.
@@ -243,6 +244,10 @@ class VectorMemoryManager:
             x_range: (min, max) inclusive range for x (issue IDs), or None for all
             y_range: (min, max) inclusive range for y, or None for all
             z_range: (min, max) inclusive range for z, or None for all
+            dag_order: Optional DAG topological ordering (maps issue_id → position).
+                      When provided, x-coordinates are compared using DAG positions
+                      instead of lexicographic string ordering. This enables correct
+                      ordering for non-padded Beads IDs.
 
         Returns:
             List of StoredDecision objects matching the ranges
@@ -267,7 +272,7 @@ class VectorMemoryManager:
                 raise QueryError(f"Invalid z_range: min ({z_min}) > max ({z_max})")
 
         # Query index for matching coordinates
-        coord_tuples = self.index.query_range(x_range, y_range, z_range)
+        coord_tuples = self.index.query_range(x_range, y_range, z_range, dag_order=dag_order)
 
         # Load decisions from file system
         results = []
@@ -284,6 +289,7 @@ class VectorMemoryManager:
         x_threshold: str,
         y_threshold: int,
         z_filter: int | None = None,
+        dag_order: dict[str, int] | None = None,
     ) -> list[StoredDecision]:
         """
         Query decisions where (x,y) < (x_threshold, y_threshold).
@@ -295,6 +301,10 @@ class VectorMemoryManager:
             x_threshold: Issue ID threshold
             y_threshold: Cycle stage threshold (1-6)
             z_filter: Optional layer filter (only return decisions at this z)
+            dag_order: Optional DAG topological ordering (maps issue_id → position).
+                      When provided, x-coordinates are compared using DAG positions
+                      instead of lexicographic string ordering. This enables correct
+                      partial ordering for non-padded Beads IDs.
 
         Returns:
             List of StoredDecision objects where (x,y) < threshold, sorted
@@ -314,6 +324,7 @@ class VectorMemoryManager:
             x_threshold=x_threshold,
             y_threshold=y_threshold,
             z_filter=z_filter,
+            dag_order=dag_order,
         )
 
         # T082: Load decisions from coordinates
