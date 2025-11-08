@@ -36,7 +36,7 @@ class TestConcurrentAccess:
             )
             yield repo_path
 
-    def test_concurrent_stores_different_coordinates(self, temp_repo):
+    def test_concurrent_stores_different_coordinates(self, temp_repo, mock_issue_id):
         """Test multiple agents storing to different coordinates concurrently."""
         errors = []
         stored_coords = []
@@ -45,7 +45,7 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id=agent_id)
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=3)
+                    coord = VectorCoordinate(x=mock_issue_id(start_x + i), y=2, z=3)
                     decision = manager.store(
                         coord=coord,
                         content=f"Decision from {agent_id} at issue {start_x + i}",
@@ -80,7 +80,7 @@ class TestConcurrentAccess:
             assert decision is not None
             assert decision.content != ""
 
-    def test_concurrent_stores_with_immutable_layer(self, temp_repo):
+    def test_concurrent_stores_with_immutable_layer(self, temp_repo, mock_issue_id):
         """Test concurrent access to immutable architecture layer."""
         # Note: Each manager instance has its own in-memory index, so they
         # don't see each other's writes until they reload. This test verifies
@@ -88,7 +88,7 @@ class TestConcurrentAccess:
         
         # First, establish an immutable decision
         setup_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
-        coord = VectorCoordinate(x=5, y=2, z=1)
+        coord = VectorCoordinate(x=mock_issue_id(5), y=2, z=1)
         setup_manager.store(
             coord=coord,
             content="Initial architecture decision",
@@ -139,12 +139,12 @@ class TestConcurrentAccess:
         decision = manager.get(coord)
         assert decision is not None
 
-    def test_concurrent_read_while_writing(self, temp_repo):
+    def test_concurrent_read_while_writing(self, temp_repo, mock_issue_id):
         """Test concurrent reads while writing."""
         # Pre-populate some decisions
         setup_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
         for x in range(1, 21):
-            coord = VectorCoordinate(x=x, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=2)
             setup_manager.store(
                 coord=coord,
                 content=f"Decision for issue {x}",
@@ -158,7 +158,7 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="writer")
                 for i in range(count):
-                    coord = VectorCoordinate(x=21 + i, y=2, z=2)
+                    coord = VectorCoordinate(x=mock_issue_id(21 + i), y=2, z=2)
                     manager.store(
                         coord=coord,
                         content=f"New decision {i}",
@@ -171,7 +171,7 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="reader")
                 for _ in range(iterations):
-                    decisions = manager.query_range(x_range=(1, 50), z_range=(2, 2))
+                    decisions = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(50)), z_range=(2, 2))
                     read_counts.append(len(decisions))
             except Exception as e:
                 errors.append(("reader", e))
@@ -196,16 +196,16 @@ class TestConcurrentAccess:
 
         # Final count should be 50
         final_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="final")
-        final_decisions = final_manager.query_range(x_range=(1, 50), z_range=(2, 2))
+        final_decisions = final_manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(50)), z_range=(2, 2))
         assert len(final_decisions) == 50
 
-    def test_concurrent_query_operations(self, temp_repo):
+    def test_concurrent_query_operations(self, temp_repo, mock_issue_id):
         """Test multiple concurrent query operations."""
         # Setup data
         setup_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
         for x in range(1, 51):
             for z in [1, 2, 3]:
-                coord = VectorCoordinate(x=x, y=2, z=z)
+                coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=z)
                 setup_manager.store(
                     coord=coord,
                     content=f"Decision at x={x}, z={z}",
@@ -223,7 +223,7 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="range-query")
                 for _ in range(iterations):
-                    results = manager.query_range(x_range=(1, 25), z_range=(1, 1))
+                    results = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(25)), z_range=(1, 1))
                     query_results["range"].append(len(results))
             except Exception as e:
                 errors.append(("range-query", e))
@@ -232,7 +232,7 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="partial-order")
                 for _ in range(iterations):
-                    results = manager.query_partial_order(x_threshold=30, y_threshold=3)
+                    results = manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=3)
                     query_results["partial_order"].append(len(results))
             except Exception as e:
                 errors.append(("partial-order", e))
@@ -269,12 +269,12 @@ class TestConcurrentAccess:
         assert all(c == query_results["partial_order"][0] for c in query_results["partial_order"])
         assert all(c == query_results["search"][0] for c in query_results["search"])
 
-    def test_concurrent_exists_checks(self, temp_repo):
+    def test_concurrent_exists_checks(self, temp_repo, mock_issue_id):
         """Test concurrent exists() checks work correctly."""
         # Pre-populate some coordinates
         setup_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
         for x in [1, 3, 5, 7, 9]:
-            coord = VectorCoordinate(x=x, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=2)
             setup_manager.store(
                 coord=coord,
                 content=f"Decision {x}",
@@ -292,7 +292,7 @@ class TestConcurrentAccess:
                 exists_count = 0
                 # Check coordinates 1-10
                 for x in range(1, 11):
-                    coord = VectorCoordinate(x=x, y=2, z=2)
+                    coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=2)
                     if manager.exists(coord):
                         exists_count += 1
                 
@@ -318,9 +318,9 @@ class TestConcurrentAccess:
         # Verify counts are correct
         assert all(count == 5 for count in exists_counts)
 
-    def test_file_locking_prevents_corruption(self, temp_repo):
+    def test_file_locking_prevents_corruption(self, temp_repo, mock_issue_id):
         """Test that file locking prevents data corruption."""
-        coord = VectorCoordinate(x=15, y=2, z=3)
+        coord = VectorCoordinate(x=mock_issue_id(15), y=2, z=3)
 
         errors = []
         stored_agents = []
@@ -363,7 +363,7 @@ class TestConcurrentAccess:
         # agent_id should be one of the writers
         assert decision.agent_id in [f"agent-{i}" for i in range(10)]
 
-    def test_multiple_managers_same_repo(self, temp_repo):
+    def test_multiple_managers_same_repo(self, temp_repo, mock_issue_id):
         """Test multiple manager instances accessing same repository."""
         errors = []
         stored_decisions = []
@@ -374,7 +374,7 @@ class TestConcurrentAccess:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id=agent_id)
 
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=2)
+                    coord = VectorCoordinate(x=mock_issue_id(start_x + i), y=2, z=2)
                     decision = manager.store(
                         coord=coord,
                         content=f"Decision from {agent_id}",
@@ -404,5 +404,5 @@ class TestConcurrentAccess:
 
         # Create new manager and verify all decisions present
         verifier = VectorMemoryManager(repo_path=temp_repo, agent_id="verifier")
-        all_decisions = verifier.query_range(x_range=(1, 25), z_range=(2, 2))
+        all_decisions = verifier.query_range(x_range=(mock_issue_id(1), mock_issue_id(25)), z_range=(2, 2))
         assert len(all_decisions) == 25

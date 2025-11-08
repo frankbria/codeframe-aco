@@ -45,7 +45,7 @@ class TestPerformanceBenchmarks:
             )
             yield repo_path
 
-    def test_store_operation_performance(self, temp_repo):
+    def test_store_operation_performance(self, temp_repo, mock_issue_id):
         """
         SC-001: Store/retrieve operations < 50ms (99th percentile)
         """
@@ -54,7 +54,7 @@ class TestPerformanceBenchmarks:
         # Measure store operations
         store_times = []
         for i in range(1, 101):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
 
             start = time.perf_counter()
             manager.store(
@@ -79,7 +79,7 @@ class TestPerformanceBenchmarks:
         # Assert success criteria
         assert p99 < 50, f"99th percentile store time ({p99:.2f}ms) exceeds 50ms threshold"
 
-    def test_retrieve_operation_performance(self, temp_repo):
+    def test_retrieve_operation_performance(self, temp_repo, mock_issue_id):
         """
         SC-001: Store/retrieve operations < 50ms (99th percentile)
         """
@@ -88,7 +88,7 @@ class TestPerformanceBenchmarks:
         # Pre-populate data
         coords = []
         for i in range(1, 101):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             manager.store(
                 coord=coord,
                 content=f"Benchmark decision {i}",
@@ -119,7 +119,7 @@ class TestPerformanceBenchmarks:
         # Assert success criteria
         assert p99 < 50, f"99th percentile retrieve time ({p99:.2f}ms) exceeds 50ms threshold"
 
-    def test_handles_10k_decisions(self, temp_repo):
+    def test_handles_10k_decisions(self, temp_repo, mock_issue_id):
         """
         SC-004: Handles 10,000 stored decisions
         """
@@ -128,15 +128,15 @@ class TestPerformanceBenchmarks:
         print(f"\nStoring 10,000 decisions...")
         start = time.perf_counter()
 
-        # Store 10,000 decisions (using x=1-1000, y=1-5, z=1-4 combinations)
+        # Store 10,000 decisions (using x=0-999, y=1-5, z=2-3 combinations)
         # With 1000 x values × 5 y values × 2 z values = 10,000 combinations
         count = 0
-        for x in range(1, 1001):
+        for x in range(0, 1000):
             for y in [1, 2, 3, 4, 5]:
                 for z in [2, 3]:  # Use 2 z values
                     if count >= 10000:
                         break
-                    coord = VectorCoordinate(x=x, y=y, z=z)
+                    coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=z)
                     manager.store(
                         coord=coord,
                         content=f"Decision at ({x}, {y}, {z})",
@@ -155,22 +155,22 @@ class TestPerformanceBenchmarks:
 
         # Verify we can query them
         start = time.perf_counter()
-        results = manager.query_range(x_range=(1, 1000))
+        results = manager.query_range(x_range=(mock_issue_id(0), mock_issue_id(999)))
         end = time.perf_counter()
 
         print(f"  Query returned {len(results)} decisions in {(end - start) * 1000:.2f}ms")
 
         assert len(results) >= 10000, "Should handle 10,000 decisions"
 
-    def test_git_sync_performance(self, temp_repo):
+    def test_git_sync_performance(self, temp_repo, mock_issue_id):
         """
         SC-005: Git sync < 5s for 1000 decisions
         """
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="benchmark")
 
-        # Store 1000 decisions
-        for i in range(1, 1001):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+        # Store 1000 decisions (use i from 0-999)
+        for i in range(0, 1000):
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             manager.store(
                 coord=coord,
                 content=f"Decision {i}",
@@ -189,14 +189,14 @@ class TestPerformanceBenchmarks:
         # Assert success criteria
         assert sync_time < 5.0, f"Git sync time ({sync_time:.2f}s) exceeds 5s threshold"
 
-    def test_recovery_performance(self, temp_repo):
+    def test_recovery_performance(self, temp_repo, mock_issue_id):
         """
         SC-006: Recovery < 10s
         """
-        # First, create and sync data
+        # First, create and sync data (use i from 0-999)
         manager1 = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
-        for i in range(1, 1001):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+        for i in range(0, 1000):
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             manager1.store(
                 coord=coord,
                 content=f"Decision {i}",
@@ -215,14 +215,14 @@ class TestPerformanceBenchmarks:
         print(f"  Loaded 1000 decisions in {recovery_time:.2f}s")
 
         # Verify data integrity
-        test_coord = VectorCoordinate(x=500, y=2, z=2)
+        test_coord = VectorCoordinate(x=mock_issue_id(500), y=2, z=2)
         decision = manager2.get(test_coord)
         assert decision is not None
 
         # Assert success criteria
         assert recovery_time < 10.0, f"Recovery time ({recovery_time:.2f}s) exceeds 10s threshold"
 
-    def test_partial_order_query_performance(self, temp_repo):
+    def test_partial_order_query_performance(self, temp_repo, mock_issue_id):
         """
         SC-007: Partial ordering queries < 100ms
         """
@@ -231,7 +231,7 @@ class TestPerformanceBenchmarks:
         # Pre-populate data
         for x in range(1, 101):
             for y in [1, 2, 3, 4]:
-                coord = VectorCoordinate(x=x, y=y, z=2)
+                coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=2)
                 manager.store(
                     coord=coord,
                     content=f"Decision at ({x}, {y})",
@@ -242,7 +242,7 @@ class TestPerformanceBenchmarks:
         query_times = []
         for _ in range(10):
             start = time.perf_counter()
-            results = manager.query_partial_order(x_threshold=50, y_threshold=3)
+            results = manager.query_partial_order(x_threshold=mock_issue_id(50), y_threshold=3)
             end = time.perf_counter()
 
             query_times.append((end - start) * 1000)  # Convert to ms
@@ -259,7 +259,7 @@ class TestPerformanceBenchmarks:
         assert avg_time < 100, f"Average partial order query time ({avg_time:.2f}ms) exceeds 100ms threshold"
         assert max_time < 100, f"Max partial order query time ({max_time:.2f}ms) exceeds 100ms threshold"
 
-    def test_content_search_performance(self, temp_repo):
+    def test_content_search_performance(self, temp_repo, mock_issue_id):
         """
         SC-008: Content search < 200ms
         """
@@ -268,7 +268,7 @@ class TestPerformanceBenchmarks:
         # Pre-populate with searchable content
         keywords = ["database", "network", "storage", "compute", "security"]
         for i in range(1, 201):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             keyword = keywords[i % len(keywords)]
             manager.store(
                 coord=coord,
@@ -297,14 +297,14 @@ class TestPerformanceBenchmarks:
         assert avg_time < 200, f"Average content search time ({avg_time:.2f}ms) exceeds 200ms threshold"
         assert max_time < 200, f"Max content search time ({max_time:.2f}ms) exceeds 200ms threshold"
 
-    def test_range_query_performance(self, temp_repo):
+    def test_range_query_performance(self, temp_repo, mock_issue_id):
         """Test range query performance across different result sizes."""
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="benchmark")
 
         # Pre-populate data
         for x in range(1, 201):
             for z in [1, 2, 3]:
-                coord = VectorCoordinate(x=x, y=2, z=z)
+                coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=z)
                 manager.store(
                     coord=coord,
                     content=f"Decision at ({x}, 2, {z})",
@@ -313,9 +313,9 @@ class TestPerformanceBenchmarks:
 
         # Test different query sizes
         test_cases = [
-            ("Small", (1, 10)),
-            ("Medium", (1, 50)),
-            ("Large", (1, 200)),
+            ("Small", (mock_issue_id(1), mock_issue_id(10))),
+            ("Medium", (mock_issue_id(1), mock_issue_id(50))),
+            ("Large", (mock_issue_id(1), mock_issue_id(200))),
         ]
 
         print(f"\nRange Query Performance:")

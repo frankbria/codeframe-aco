@@ -12,17 +12,17 @@ from vector_memory.validation import MemoryIndex
 class TestMemoryIndexBasic:
     """Test basic MemoryIndex operations."""
 
-    def test_create_empty_index(self):
+    def test_create_empty_index(self, mock_issue_id):
         """Test creating empty index."""
         index = MemoryIndex()
         assert len(index.coords) == 0
         assert len(index.metadata) == 0
         assert len(index.content_index) == 0
 
-    def test_add_single_coordinate(self):
+    def test_add_single_coordinate(self, mock_issue_id):
         """Test adding a single coordinate."""
         index = MemoryIndex()
-        coord = VectorCoordinate(x=5, y=2, z=1)
+        coord = VectorCoordinate(x=mock_issue_id(5), y=2, z=1)
         metadata = {"timestamp": "2025-01-06T12:00:00Z", "agent_id": "test"}
 
         index.add(coord, metadata)
@@ -30,10 +30,10 @@ class TestMemoryIndexBasic:
         assert coord.to_tuple() in index.coords
         assert index.metadata[coord.to_tuple()] == metadata
 
-    def test_remove_coordinate(self):
+    def test_remove_coordinate(self, mock_issue_id):
         """Test removing a coordinate."""
         index = MemoryIndex()
-        coord = VectorCoordinate(x=5, y=2, z=1)
+        coord = VectorCoordinate(x=mock_issue_id(5), y=2, z=1)
         metadata = {"timestamp": "2025-01-06T12:00:00Z", "agent_id": "test"}
 
         index.add(coord, metadata)
@@ -47,18 +47,18 @@ class TestMemoryIndexBasic:
 class TestMemoryIndexConcurrency:
     """Test concurrency scenarios for MemoryIndex."""
 
-    def test_concurrent_adds_same_layer(self):
+    def test_concurrent_adds_same_layer(self, mock_issue_id):
         """Test multiple threads adding coordinates to the same layer."""
         index = MemoryIndex()
         errors = []
 
-        def add_coordinates(start_x: int, count: int):
+        def add_coordinates(start_idx: int, count: int):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=1)
+                    coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=2, z=1)
                     metadata = {
                         "timestamp": f"2025-01-06T12:00:{i:02d}Z",
-                        "agent_id": f"agent-{start_x}",
+                        "agent_id": f"agent-{start_idx}",
                     }
                     index.add(coord, metadata)
             except Exception as e:
@@ -67,7 +67,7 @@ class TestMemoryIndexConcurrency:
         # Create 4 threads, each adding 25 coordinates
         threads = []
         for i in range(4):
-            t = threading.Thread(target=add_coordinates, args=(i * 25 + 1, 25))
+            t = threading.Thread(target=add_coordinates, args=(i * 25, 25))
             threads.append(t)
             t.start()
 
@@ -81,7 +81,7 @@ class TestMemoryIndexConcurrency:
         # Check all 100 coordinates were added
         assert len(index.coords) == 100
 
-    def test_concurrent_adds_different_layers(self):
+    def test_concurrent_adds_different_layers(self, mock_issue_id):
         """Test multiple threads adding coordinates to different layers."""
         index = MemoryIndex()
         errors = []
@@ -89,7 +89,7 @@ class TestMemoryIndexConcurrency:
         def add_layer_coordinates(z: int, count: int):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=i + 1, y=2, z=z)
+                    coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=z)
                     metadata = {
                         "timestamp": f"2025-01-06T12:00:{i:02d}Z",
                         "agent_id": f"agent-layer-{z}",
@@ -117,7 +117,7 @@ class TestMemoryIndexConcurrency:
             layer_coords = [c for c in index.coords if c[2] == z]
             assert len(layer_coords) == 10
 
-    def test_concurrent_add_and_query(self):
+    def test_concurrent_add_and_query(self, mock_issue_id, mock_issue_batch):
         """Test concurrent adds while querying."""
         index = MemoryIndex()
         errors = []
@@ -126,7 +126,7 @@ class TestMemoryIndexConcurrency:
         def add_coordinates(count: int):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=i + 1, y=2, z=1)
+                    coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=1)
                     metadata = {"timestamp": f"2025-01-06T12:00:{i:02d}Z", "agent_id": "adder"}
                     index.add(coord, metadata)
             except Exception as e:
@@ -134,8 +134,10 @@ class TestMemoryIndexConcurrency:
 
         def query_coordinates():
             try:
+                batch_ids = mock_issue_batch(0, 50)
                 for _ in range(50):
-                    results = index.query_range(x_range=(1, 50))
+                    # x_range expects (min, max) tuple, not full list
+                    results = index.query_range(x_range=(batch_ids[0], batch_ids[-1]))
                     query_results.append(len(results))
             except Exception as e:
                 errors.append(e)
@@ -164,37 +166,37 @@ class TestMemoryIndexConcurrency:
         # Some queries might see partial results
         assert len(query_results) > 0
 
-    def test_concurrent_add_and_remove(self):
+    def test_concurrent_add_and_remove(self, mock_issue_id):
         """Test concurrent adds and removes."""
         index = MemoryIndex()
         errors = []
 
         # Pre-populate with some coordinates
-        for i in range(1, 51):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+        for i in range(0, 50):
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             metadata = {"timestamp": f"2025-01-06T12:00:00Z", "agent_id": "setup"}
             index.add(coord, metadata)
 
-        def add_coordinates(start_x: int, count: int):
+        def add_coordinates(start_idx: int, count: int):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=3, z=1)
+                    coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=3, z=1)
                     metadata = {"timestamp": f"2025-01-06T13:00:00Z", "agent_id": "adder"}
                     index.add(coord, metadata)
             except Exception as e:
                 errors.append(e)
 
-        def remove_coordinates(start_x: int, count: int):
+        def remove_coordinates(start_idx: int, count: int):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=2)
+                    coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=2, z=2)
                     index.remove(coord)
             except Exception as e:
                 errors.append(e)
 
         # Create add and remove threads
-        adder = threading.Thread(target=add_coordinates, args=(51, 25))
-        remover = threading.Thread(target=remove_coordinates, args=(1, 25))
+        adder = threading.Thread(target=add_coordinates, args=(50, 25))
+        remover = threading.Thread(target=remove_coordinates, args=(0, 25))
 
         # Start both
         adder.start()
@@ -207,18 +209,18 @@ class TestMemoryIndexConcurrency:
         # Check no errors
         assert len(errors) == 0, f"Errors occurred: {errors}"
 
-        # Should have 50 remaining: 25 from original (26-50) + 25 new
+        # Should have 50 remaining: 25 from original (25-49) + 25 new
         assert len(index.coords) == 50
 
-    def test_concurrent_content_index_updates(self):
+    def test_concurrent_content_index_updates(self, mock_issue_id):
         """Test concurrent updates to content index."""
         index = MemoryIndex()
         errors = []
 
-        def add_with_content(start_x: int, count: int, word: str):
+        def add_with_content(start_idx: int, count: int, word: str):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=3)
+                    coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=2, z=3)
                     metadata = {"timestamp": f"2025-01-06T12:00:00Z", "agent_id": f"agent-{word}"}
                     content = f"This is a test with {word} keyword"
                     index.add(coord, metadata, content=content)
@@ -229,7 +231,7 @@ class TestMemoryIndexConcurrency:
         threads = []
         keywords = ["database", "network", "storage", "compute"]
         for i, keyword in enumerate(keywords):
-            t = threading.Thread(target=add_with_content, args=(i * 10 + 1, 10, keyword))
+            t = threading.Thread(target=add_with_content, args=(i * 10, 10, keyword))
             threads.append(t)
             t.start()
 
@@ -249,23 +251,23 @@ class TestMemoryIndexConcurrency:
         test_coords = index.query_content(["test"])
         assert len(test_coords) == 40  # All have "test"
 
-    def test_concurrent_partial_order_queries(self):
+    def test_concurrent_partial_order_queries(self, mock_issue_id, mock_dag_order):
         """Test concurrent partial order queries while adding."""
         index = MemoryIndex()
         errors = []
         query_counts = []
 
         # Pre-populate
-        for x in range(1, 21):
+        for i in range(0, 20):
             for y in [1, 2, 3]:
-                coord = VectorCoordinate(x=x, y=y, z=1)
+                coord = VectorCoordinate(x=mock_issue_id(i), y=y, z=1)
                 metadata = {"timestamp": "2025-01-06T12:00:00Z", "agent_id": "setup"}
                 index.add(coord, metadata)
 
-        def query_before_point(x_thresh: int, y_thresh: int, iterations: int):
+        def query_before_point(issue_id: str, y_thresh: int, iterations: int):
             try:
                 for _ in range(iterations):
-                    results = index.query_partial_order(x_thresh, y_thresh)
+                    results = index.query_partial_order(issue_id, y_thresh, mock_dag_order)
                     query_counts.append(len(results))
             except Exception as e:
                 errors.append(e)
@@ -273,7 +275,7 @@ class TestMemoryIndexConcurrency:
         # Create multiple query threads
         threads = []
         for i in range(4):
-            t = threading.Thread(target=query_before_point, args=(10, 3, 25))
+            t = threading.Thread(target=query_before_point, args=(mock_issue_id(10), 3, 25))
             threads.append(t)
             t.start()
 
@@ -289,12 +291,12 @@ class TestMemoryIndexConcurrency:
         # All should be the same since we're not modifying during queries
         assert all(c == query_counts[0] for c in query_counts)
 
-    def test_race_condition_add_same_coordinate(self):
+    def test_race_condition_add_same_coordinate(self, mock_issue_id):
         """Test race condition when adding same coordinate from multiple threads."""
         index = MemoryIndex()
         errors = []
 
-        coord = VectorCoordinate(x=5, y=2, z=1)
+        coord = VectorCoordinate(x=mock_issue_id(5), y=2, z=1)
 
         def add_same_coordinate(agent_id: str):
             try:
@@ -323,15 +325,15 @@ class TestMemoryIndexConcurrency:
         # One of the agent IDs should be in metadata
         assert "agent_id" in index.metadata[coord.to_tuple()]
 
-    def test_concurrent_layer_index_consistency(self):
+    def test_concurrent_layer_index_consistency(self, mock_issue_id):
         """Test layer index remains consistent during concurrent operations."""
         index = MemoryIndex()
         errors = []
 
-        def add_to_layer(z: int, start_x: int, count: int):
+        def add_to_layer(z: int, start_idx: int, count: int):
             try:
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=z)
+                    coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=2, z=z)
                     metadata = {"timestamp": "2025-01-06T12:00:00Z", "agent_id": f"layer-{z}"}
                     index.add(coord, metadata)
             except Exception as e:
@@ -340,7 +342,7 @@ class TestMemoryIndexConcurrency:
         # Add to all layers concurrently
         threads = []
         for z in [1, 2, 3, 4]:
-            t = threading.Thread(target=add_to_layer, args=(z, 1, 25))
+            t = threading.Thread(target=add_to_layer, args=(z, 0, 25))
             threads.append(t)
             t.start()
 

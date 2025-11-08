@@ -3,11 +3,13 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
+from tests.conftest import mock_issue_id_factory
 from vector_memory.coordinate import VectorCoordinate
 from vector_memory.exceptions import CoordinateValidationError
 
 # Define valid coordinate strategies
-valid_x = st.integers(min_value=1, max_value=1000)
+# x is now an issue ID string (indices 0-999 map to test-issue-* IDs)
+valid_x = st.integers(min_value=0, max_value=999).map(mock_issue_id_factory)
 valid_y = st.integers(min_value=1, max_value=5)
 valid_z = st.integers(min_value=1, max_value=4)
 
@@ -70,8 +72,8 @@ class TestCoordinateProperties:
         coord = VectorCoordinate(x, y, z)
         path_str = str(coord.to_path())
 
-        # Path should contain x value (zero-padded)
-        assert f"x-{x:03d}" in path_str
+        # Path should contain x value (issue ID string)
+        assert f"x-{x}" in path_str
 
         # Path should contain y and z values
         assert f"y-{y}" in path_str
@@ -99,8 +101,9 @@ class TestCoordinateProperties:
     @given(y=st.integers().filter(lambda y: y not in {1, 2, 3, 4, 5}))
     def test_invalid_y_values(self, y):
         """Test that y values outside {1,2,3,4,5} are rejected."""
+        from tests.conftest import mock_issue_id_factory
         try:
-            VectorCoordinate(x=1, y=y, z=1)
+            VectorCoordinate(x=mock_issue_id_factory(1), y=y, z=1)
             raise AssertionError(f"Expected CoordinateValidationError for y={y}")
         except CoordinateValidationError:
             pass  # Expected
@@ -108,8 +111,9 @@ class TestCoordinateProperties:
     @given(z=st.integers().filter(lambda z: z not in {1, 2, 3, 4}))
     def test_invalid_z_values(self, z):
         """Test that z values outside {1,2,3,4} are rejected."""
+        from tests.conftest import mock_issue_id_factory
         try:
-            VectorCoordinate(x=1, y=1, z=z)
+            VectorCoordinate(x=mock_issue_id_factory(1), y=1, z=z)
             raise AssertionError(f"Expected CoordinateValidationError for z={z}")
         except CoordinateValidationError:
             pass  # Expected

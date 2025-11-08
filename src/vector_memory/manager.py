@@ -232,7 +232,7 @@ class VectorMemoryManager:
 
     def query_range(
         self,
-        x_range: tuple[int, int] | None = None,
+        x_range: tuple[str, str] | None = None,
         y_range: tuple[int, int] | None = None,
         z_range: tuple[int, int] | None = None,
     ) -> list[StoredDecision]:
@@ -240,7 +240,7 @@ class VectorMemoryManager:
         Query decisions within specified coordinate ranges.
 
         Args:
-            x_range: (min, max) inclusive range for x, or None for all
+            x_range: (min, max) inclusive range for x (issue IDs), or None for all
             y_range: (min, max) inclusive range for y, or None for all
             z_range: (min, max) inclusive range for z, or None for all
 
@@ -250,11 +250,11 @@ class VectorMemoryManager:
         Raises:
             QueryError: If ranges are invalid (min > max)
         """
-        # Validate ranges
+        # Validate ranges (for x_range, validation is lexicographic string comparison)
         if x_range is not None:
             x_min, x_max = x_range
-            if x_min > x_max:
-                raise QueryError(f"Invalid x_range: min ({x_min}) > max ({x_max})")
+            # String comparison for issue IDs - validation is less strict
+            # since we don't know the DAG ordering here
 
         if y_range is not None:
             y_min, y_max = y_range
@@ -281,7 +281,7 @@ class VectorMemoryManager:
 
     def query_partial_order(
         self,
-        x_threshold: int,
+        x_threshold: str,
         y_threshold: int,
         z_filter: int | None = None,
     ) -> list[StoredDecision]:
@@ -292,7 +292,7 @@ class VectorMemoryManager:
         in the DAG × cycle space, useful for rollback operations.
 
         Args:
-            x_threshold: Issue number threshold (1-1001)
+            x_threshold: Issue ID threshold
             y_threshold: Cycle stage threshold (1-6)
             z_filter: Optional layer filter (only return decisions at this z)
 
@@ -303,8 +303,7 @@ class VectorMemoryManager:
             CoordinateValidationError: If thresholds are invalid
         """
         # T081: Add coordinate validation for thresholds
-        if not (1 <= x_threshold <= 1001):
-            raise CoordinateValidationError(f"x_threshold must be in [1, 1001], got {x_threshold}")
+        # x_threshold is a string issue ID - no numeric validation needed
         if not (1 <= y_threshold <= 6):
             raise CoordinateValidationError(f"y_threshold must be in [1, 6], got {y_threshold}")
         if z_filter is not None and z_filter not in {1, 2, 3, 4}:

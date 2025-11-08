@@ -13,25 +13,28 @@ class VectorCoordinate:
     Represents a position in 3D space used to address stored information.
 
     Attributes:
-        x: Issue number in the DAG (range: 1-1000 for MVP)
+        x: Beads issue ID (e.g., "codeframe-aco-t49", "codeframe-aco-xon")
         y: Development cycle stage (1=architect, 2=test, 3=implement, 4=review, 5=merge)
         z: Memory layer (1=Architecture, 2=Interfaces, 3=Implementation, 4=Ephemeral)
     """
 
-    x: int
+    x: str  # Beads issue ID
     y: int
     z: int
 
     def __post_init__(self) -> None:
         """Validate coordinate values on construction."""
-        if not (1 <= self.x <= 1000):
-            raise CoordinateValidationError(f"x must be in [1, 1000], got {self.x}")
+        # Validate Beads issue ID format: prefix-hash (e.g., "codeframe-aco-t49")
+        if not isinstance(self.x, str) or not re.match(r'^[\w-]+-[a-z0-9]{3}$', self.x):
+            raise CoordinateValidationError(
+                f"x must be a valid Beads issue ID (format: 'project-prefix-xxx'), got: {self.x}"
+            )
         if self.y not in {1, 2, 3, 4, 5}:
             raise CoordinateValidationError(f"y must be in {{1, 2, 3, 4, 5}}, got {self.y}")
         if self.z not in {1, 2, 3, 4}:
             raise CoordinateValidationError(f"z must be in {{1, 2, 3, 4}}, got {self.z}")
 
-    def to_tuple(self) -> tuple[int, int, int]:
+    def to_tuple(self) -> tuple[str, int, int]:
         """
         Convert to tuple for use as dict key.
 
@@ -45,9 +48,9 @@ class VectorCoordinate:
         Convert to file system path.
 
         Returns:
-            Path object like .vector-memory/x-005/y-2-z-1.json
+            Path object like .vector-memory/x-codeframe-aco-t49/y-2-z-1.json
         """
-        return Path(f".vector-memory/x-{self.x:03d}/y-{self.y}-z-{self.z}.json")
+        return Path(f".vector-memory/x-{self.x}/y-{self.y}-z-{self.z}.json")
 
     @staticmethod
     def from_path(path: Path) -> "VectorCoordinate":
@@ -55,7 +58,7 @@ class VectorCoordinate:
         Parse coordinate from file path.
 
         Args:
-            path: File path to parse (e.g., .vector-memory/x-005/y-2-z-1.json)
+            path: File path to parse (e.g., .vector-memory/x-codeframe-aco-t49/y-2-z-1.json)
 
         Returns:
             VectorCoordinate parsed from path
@@ -63,13 +66,15 @@ class VectorCoordinate:
         Raises:
             ValueError: If path format is invalid
         """
-        # Match pattern: x-NNN/y-N-z-N.json
+        # Match pattern: x-{issue-id}/y-N-z-N.json
         path_str = str(path).replace("\\", "/")  # Normalize Windows paths
-        match = re.search(r"x-(\d+)/y-(\d+)-z-(\d+)\.json", path_str)
+        match = re.search(r"x-([\w-]+)/y-(\d+)-z-(\d+)\.json", path_str)
         if not match:
             raise ValueError(f"Invalid coordinate path: {path}")
 
-        x, y, z = map(int, match.groups())
+        x = match.group(1)  # issue ID (string)
+        y = int(match.group(2))
+        z = int(match.group(3))
         return VectorCoordinate(x=x, y=y, z=z)
 
     def __lt__(self, other: "VectorCoordinate") -> bool:

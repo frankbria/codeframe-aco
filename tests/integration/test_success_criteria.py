@@ -40,7 +40,7 @@ class TestSuccessCriteria:
             )
             yield repo_path
 
-    def test_sc001_store_retrieve_under_50ms(self, temp_repo):
+    def test_sc001_store_retrieve_under_50ms(self, temp_repo, mock_issue_id):
         """
         SC-001: Agents can store and retrieve decisions in under 50 milliseconds
         for 99% of operations.
@@ -53,7 +53,7 @@ class TestSuccessCriteria:
         # Test store operations
         store_times = []
         for i in range(1, 101):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             start = time.perf_counter()
             manager.store(coord, f"Decision {i}", issue_context={"issue_id": f"test-{i}"})
             elapsed = (time.perf_counter() - start) * 1000
@@ -62,7 +62,7 @@ class TestSuccessCriteria:
         # Test retrieve operations
         retrieve_times = []
         for i in range(1, 101):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             start = time.perf_counter()
             manager.get(coord)
             elapsed = (time.perf_counter() - start) * 1000
@@ -83,7 +83,7 @@ class TestSuccessCriteria:
         assert store_p99 < threshold, f"Store p99 {store_p99:.2f}ms exceeds {threshold}ms"
         assert retrieve_p99 < threshold, f"Retrieve p99 {retrieve_p99:.2f}ms exceeds {threshold}ms"
 
-    def test_sc002_100_percent_accuracy(self, temp_repo):
+    def test_sc002_100_percent_accuracy(self, temp_repo, mock_issue_id):
         """
         SC-002: System maintains 100% accuracy in coordinate-based retrieval
         (no false positives or false negatives).
@@ -95,7 +95,7 @@ class TestSuccessCriteria:
         for x in [1, 5, 10, 15, 20]:
             for y in [1, 3, 5]:
                 for z in [1, 2, 3]:
-                    coord = VectorCoordinate(x=x, y=y, z=z)
+                    coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=z)
                     manager.store(coord, f"Decision at {coord.to_tuple()}")
                     stored_coords.append(coord)
 
@@ -112,7 +112,7 @@ class TestSuccessCriteria:
         # Check non-stored coordinates (should not exist)
         for x in [2, 6, 11]:
             for y in [2, 4]:
-                coord = VectorCoordinate(x=x, y=y, z=2)
+                coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=2)
                 if coord not in stored_coords:
                     decision = manager.get(coord)
                     if decision is not None:
@@ -126,7 +126,7 @@ class TestSuccessCriteria:
         assert false_positives == 0, "False positives detected"
         assert false_negatives == 0, "False negatives detected"
 
-    def test_sc003_architecture_100_percent_immutable(self, temp_repo):
+    def test_sc003_architecture_100_percent_immutable(self, temp_repo, mock_issue_id):
         """
         SC-003: Architecture layer (z=1) maintains 100% immutability -
         zero successful modifications or deletions.
@@ -136,7 +136,7 @@ class TestSuccessCriteria:
         # Store architecture decisions
         arch_coords = []
         for x in range(1, 11):
-            coord = VectorCoordinate(x=x, y=2, z=1)
+            coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=1)
             manager.store(coord, f"Architecture decision {x}")
             arch_coords.append(coord)
 
@@ -159,20 +159,20 @@ class TestSuccessCriteria:
 
         assert successful_modifications == 0, "Architecture layer was modified"
 
-    def test_sc004_handles_10k_decisions(self, temp_repo):
+    def test_sc004_handles_10k_decisions(self, temp_repo, mock_issue_id):
         """
         SC-004: System handles 10,000 stored decisions without performance degradation.
         """
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="sc004")
 
-        # Store 10,000 decisions
+        # Store 10,000 decisions (use x from 0-999)
         count = 0
-        for x in range(1, 1001):
+        for x in range(0, 1000):
             for y in [1, 2, 3, 4, 5]:
                 for z in [2, 3]:
                     if count >= 10000:
                         break
-                    coord = VectorCoordinate(x=x, y=y, z=z)
+                    coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=z)
                     manager.store(coord, f"Decision {count}", issue_context={"issue_id": f"t-{x}"})
                     count += 1
                 if count >= 10000:
@@ -182,7 +182,7 @@ class TestSuccessCriteria:
 
         # Test query performance with 10k decisions
         start = time.perf_counter()
-        results = manager.query_range(x_range=(1, 1000))
+        results = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(999)))
         query_time = time.perf_counter() - start
 
         print(f"\nSC-004 Results:")
@@ -193,16 +193,16 @@ class TestSuccessCriteria:
         threshold = 1.0 * CI_THRESHOLD_MULTIPLIER
         assert query_time < threshold, f"Query time {query_time:.2f}s exceeds {threshold}s (degradation detected)"
 
-    def test_sc005_git_sync_under_5_seconds(self, temp_repo):
+    def test_sc005_git_sync_under_5_seconds(self, temp_repo, mock_issue_id):
         """
         SC-005: Git synchronization completes in under 5 seconds for typical
         project state (up to 1000 decisions).
         """
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="sc005")
 
-        # Store 1000 decisions
-        for i in range(1, 1001):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+        # Store 1000 decisions (use i from 0-999)
+        for i in range(0, 1000):
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             manager.store(coord, f"Decision {i}", issue_context={"issue_id": f"test-{i}"})
 
         # Measure sync time
@@ -216,15 +216,15 @@ class TestSuccessCriteria:
         threshold = 5.0 * CI_THRESHOLD_MULTIPLIER
         assert sync_time < threshold, f"Sync took {sync_time:.2f}s, exceeds {threshold}s limit"
 
-    def test_sc006_recovery_under_10_seconds(self, temp_repo):
+    def test_sc006_recovery_under_10_seconds(self, temp_repo, mock_issue_id):
         """
         SC-006: System recovers from crash and reconstructs full memory state
         in under 10 seconds.
         """
-        # Setup: Create and sync data
+        # Setup: Create and sync data (use i from 0-999)
         manager1 = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
-        for i in range(1, 1001):
-            coord = VectorCoordinate(x=i, y=2, z=2)
+        for i in range(0, 1000):
+            coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
             manager1.store(coord, f"Decision {i}", issue_context={"issue_id": f"test-{i}"})
         manager1.sync()
 
@@ -235,7 +235,7 @@ class TestSuccessCriteria:
         recovery_time = time.perf_counter() - start
 
         # Verify data integrity
-        test_coord = VectorCoordinate(x=500, y=2, z=2)
+        test_coord = VectorCoordinate(x=mock_issue_id(500), y=2, z=2)
         decision = manager2.get(test_coord)
 
         print(f"\nSC-006 Results:")
@@ -246,7 +246,7 @@ class TestSuccessCriteria:
         assert recovery_time < threshold, f"Recovery took {recovery_time:.2f}s, exceeds {threshold}s"
         assert decision is not None, "Data integrity compromised"
 
-    def test_sc007_partial_order_under_100ms(self, temp_repo):
+    def test_sc007_partial_order_under_100ms(self, temp_repo, mock_issue_id):
         """
         SC-007: Partial ordering queries return results in under 100 milliseconds
         for DAGs with up to 100 issues.
@@ -256,12 +256,12 @@ class TestSuccessCriteria:
         # Store decisions for 100 issues
         for x in range(1, 101):
             for y in [1, 2, 3, 4]:
-                coord = VectorCoordinate(x=x, y=y, z=2)
+                coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=2)
                 manager.store(coord, f"Decision at ({x}, {y})")
 
         # Test partial order query
         start = time.perf_counter()
-        results = manager.query_partial_order(x_threshold=50, y_threshold=3)
+        results = manager.query_partial_order(x_threshold=mock_issue_id(50), y_threshold=3)
         query_time = (time.perf_counter() - start) * 1000
 
         print(f"\nSC-007 Results:")
@@ -271,22 +271,22 @@ class TestSuccessCriteria:
         threshold = 100 * CI_THRESHOLD_MULTIPLIER
         assert query_time < threshold, f"Query took {query_time:.2f}ms, exceeds {threshold}ms"
 
-    def test_sc008_content_search_under_200ms(self, temp_repo):
+    def test_sc008_content_search_under_200ms(self, temp_repo, mock_issue_id):
         """
         SC-008: Content search returns relevant decisions in under 200 milliseconds
         across 10,000 decisions.
         """
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="sc008")
 
-        # Store 10,000 decisions with searchable content
+        # Store 10,000 decisions with searchable content (use x from 0-999)
         keywords = ["database", "network", "storage", "compute", "security"]
         count = 0
-        for x in range(1, 1001):
+        for x in range(0, 1000):
             for y in [1, 2, 3, 4, 5]:
                 for z in [2, 3]:
                     if count >= 10000:
                         break
-                    coord = VectorCoordinate(x=x, y=y, z=z)
+                    coord = VectorCoordinate(x=mock_issue_id(x), y=y, z=z)
                     keyword = keywords[count % len(keywords)]
                     manager.store(coord, f"Decision about {keyword} for issue {x}")
                     count += 1
@@ -308,7 +308,7 @@ class TestSuccessCriteria:
         assert search_time < threshold, f"Search took {search_time:.2f}ms, exceeds {threshold}ms"
         assert len(results) > 0, "No results found"
 
-    def test_sc009_zero_data_loss_concurrent_access(self, temp_repo):
+    def test_sc009_zero_data_loss_concurrent_access(self, temp_repo, mock_issue_id):
         """
         SC-009: Zero data loss during concurrent access scenarios (100% consistency).
         """
@@ -321,7 +321,7 @@ class TestSuccessCriteria:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id=agent_id)
                 for i in range(count):
-                    coord = VectorCoordinate(x=start_x + i, y=2, z=2)
+                    coord = VectorCoordinate(x=mock_issue_id(start_x + i), y=2, z=2)
                     decision = manager.store(coord, f"Decision from {agent_id}")
                     stored_decisions.append(decision)
             except Exception as e:
@@ -339,7 +339,7 @@ class TestSuccessCriteria:
 
         # Verify no errors and all data present
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="verifier")
-        all_decisions = manager.query_range(x_range=(1, 50))
+        all_decisions = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(50)))
 
         print(f"\nSC-009 Results:")
         print(f"  Errors during concurrent access: {len(errors)}")
@@ -350,7 +350,7 @@ class TestSuccessCriteria:
         assert len(errors) == 0, f"Errors occurred: {errors}"
         assert len(all_decisions) == 50, "Data loss detected"
 
-    def test_sc010_context_queries_under_5_lookups(self, temp_repo):
+    def test_sc010_context_queries_under_5_lookups(self, temp_repo, mock_issue_id):
         """
         SC-010: 95% of agent context queries are satisfied with fewer than 5
         coordinate lookups.
@@ -360,20 +360,20 @@ class TestSuccessCriteria:
         # Store decisions across different coordinates
         for x in range(1, 51):
             for z in [1, 2]:
-                coord = VectorCoordinate(x=x, y=2, z=z)
+                coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=z)
                 manager.store(coord, f"Decision at x={x}, z={z}")
 
         # Simulate common context queries
         # 1. Get all architecture for current issue (1 lookup)
-        results1 = manager.query_range(x_range=(10, 10), z_range=(1, 1))
+        results1 = manager.query_range(x_range=(mock_issue_id(10), mock_issue_id(10)), z_range=(1, 1))
         lookups1 = 1
 
         # 2. Get architecture decisions for issues 1-20 (1 lookup)
-        results2 = manager.query_range(x_range=(1, 20), z_range=(1, 1))
+        results2 = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1))
         lookups2 = 1
 
         # 3. Get all decisions before issue 30 (1 lookup)
-        results3 = manager.query_partial_order(x_threshold=30, y_threshold=5)
+        results3 = manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=5)
         lookups3 = 1
 
         # 4. Search for specific content (1 lookup)

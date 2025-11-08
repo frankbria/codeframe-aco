@@ -18,10 +18,10 @@ class MemoryIndex:
 
     def __init__(self) -> None:
         """Initialize empty index."""
-        self.coords: dict[tuple[int, int, int], Path] = {}
-        self.metadata: dict[tuple[int, int, int], dict] = {}
-        self.content_index: dict[str, set[tuple[int, int, int]]] = {}
-        self.layer_index: dict[int, list[tuple[int, int, int]]] = {1: [], 2: [], 3: [], 4: []}
+        self.coords: dict[tuple[str, int, int], Path] = {}
+        self.metadata: dict[tuple[str, int, int], dict] = {}
+        self.content_index: dict[str, set[tuple[str, int, int]]] = {}
+        self.layer_index: dict[int, list[tuple[str, int, int]]] = {1: [], 2: [], 3: [], 4: []}
 
     def add(self, coord: VectorCoordinate, metadata: dict, content: str = "") -> None:
         """
@@ -91,17 +91,19 @@ class MemoryIndex:
 
     def query_range(
         self,
-        x_range: tuple[int, int] | None = None,
+        x_range: tuple[str, str] | None = None,
         y_range: tuple[int, int] | None = None,
         z_range: tuple[int, int] | None = None,
-    ) -> list[tuple[int, int, int]]:
+        dag_order: dict[str, int] | None = None,
+    ) -> list[tuple[str, int, int]]:
         """
         O(n) scan with filtering by coordinate ranges.
 
         Args:
-            x_range: (min, max) inclusive range for x, or None for all
+            x_range: (min, max) inclusive range for x (issue IDs), or None for all
             y_range: (min, max) inclusive range for y, or None for all
             z_range: (min, max) inclusive range for z, or None for all
+            dag_order: Optional DAG ordering for x comparison (maps issue_id -> position)
 
         Returns:
             List of coordinate tuples matching the ranges
@@ -114,8 +116,18 @@ class MemoryIndex:
             # Check x range
             if x_range is not None:
                 x_min, x_max = x_range
-                if not (x_min <= x <= x_max):
-                    continue
+                
+                if dag_order is not None:
+                    # Use DAG topological sort positions for comparison
+                    x_pos = dag_order.get(x, float('inf'))
+                    x_min_pos = dag_order.get(x_min, float('-inf'))
+                    x_max_pos = dag_order.get(x_max, float('inf'))
+                    if not (x_min_pos <= x_pos <= x_max_pos):
+                        continue
+                else:
+                    # Fallback: lexicographic string comparison
+                    if not (x_min <= x <= x_max):
+                        continue
 
             # Check y range
             if y_range is not None:
@@ -134,15 +146,16 @@ class MemoryIndex:
         return sorted(results)
 
     def query_partial_order(
-        self, x_threshold: int, y_threshold: int, z_filter: int | None = None
-    ) -> list[tuple[int, int, int]]:
+        self, x_threshold: str, y_threshold: int, z_filter: int | None = None, dag_order: dict[str, int] | None = None
+    ) -> list[tuple[str, int, int]]:
         """
         Find all coordinates where (x,y) < (x_threshold, y_threshold).
 
         Args:
-            x_threshold: Issue number threshold
+            x_threshold: Issue ID threshold
             y_threshold: Cycle stage threshold
             z_filter: Optional layer filter (only return decisions at this z)
+            dag_order: Optional DAG ordering for x comparison (maps issue_id -> position)
 
         Returns:
             List of coordinate tuples where (x,y) < threshold
@@ -154,7 +167,18 @@ class MemoryIndex:
 
             # Check partial ordering: (x,y) < (x_threshold, y_threshold)
             # Means: x < x_threshold OR (x == x_threshold AND y < y_threshold)
-            if x < x_threshold or (x == x_threshold and y < y_threshold):
+            if dag_order is not None:
+                # Use DAG topological sort positions
+                x_pos = dag_order.get(x, float('inf'))
+                x_threshold_pos = dag_order.get(x_threshold, float('inf'))
+                x_less = x_pos < x_threshold_pos
+                x_equal = x == x_threshold
+            else:
+                # Fallback: lexicographic string comparison
+                x_less = x < x_threshold
+                x_equal = x == x_threshold
+            
+            if x_less or (x_equal and y < y_threshold):
                 # Apply z filter if specified
                 if z_filter is None or z == z_filter:
                     results.append(coord_tuple)
@@ -163,7 +187,7 @@ class MemoryIndex:
 
     def query_content(
         self, search_terms: list[str], match_all: bool = False
-    ) -> set[tuple[int, int, int]]:
+    ) -> set[tuple[str, int, int]]:
         """
         Search by content keywords.
 

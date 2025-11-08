@@ -31,7 +31,15 @@
       "Bash(then find /home/frankbria/projects/codeframe-aco/specs/002-beads-integration/checklists -type f -name \"*.md\")",
       "Bash(pip install:*)",
       "Bash(gh pr view:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(for file in tests/unit/test_manager.py tests/unit/test_query.py tests/integration/*.py)",
+      "Bash(do echo \"Checking $file...\" source .venv/bin/activate)",
+      "Bash(poetry run pytest:*)",
+      "Bash(.venv/bin/pytest tests/unit/test_query.py::TestQueryRange::test_query_by_x_range -xvs)",
+      "Bash(.venv/bin/pytest tests/unit/test_query.py::TestPartialOrderQueries -xvs)",
+      "Bash(.venv/bin/pytest:*)"
     ],
     "deny": [],
     "ask": []
