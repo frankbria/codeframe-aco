@@ -165,7 +165,7 @@ TaskID: Sequential number (T001, T002, ...)
 
 ---
 
-## Phase 5: User Story 3 - Retrieve Issue Details (P3)
+## Phase 5: User Story 3 - Retrieve Issue Details (P3) ✅
 
 **Goal**: Enable orchestrators to retrieve full issue context for planning
 
@@ -175,26 +175,26 @@ TaskID: Sequential number (T001, T002, ...)
 
 ### Client Methods (Tests First)
 
-- [ ] T067 [P] [US3] Write unit tests for get_issue() in tests/unit/test_client.py
-- [ ] T068 [P] [US3] Write unit tests for list_issues() in tests/unit/test_client.py
-- [ ] T069 [US3] Write integration tests for get_issue() in tests/integration/test_queries.py
-- [ ] T070 [US3] Write integration tests for list_issues() filters in tests/integration/test_queries.py
-- [ ] T071 [US3] Test scenario: Issue with priority P0, type "feature" → all fields correct
-- [ ] T072 [US3] Test scenario: Issue with dependencies → dependency list includes blockers
-- [ ] T073 [US3] Test scenario: Issue with metadata → dates and author correctly parsed
+- [X] T067 [P] [US3] Write unit tests for get_issue() in tests/unit/test_client.py (completed in Phase 3)
+- [X] T068 [P] [US3] Write unit tests for list_issues() in tests/unit/test_client.py (12 tests)
+- [X] T069 [US3] Write integration tests for get_issue() in tests/integration/test_queries.py
+- [X] T070 [US3] Write integration tests for list_issues() filters in tests/integration/test_queries.py
+- [X] T071 [US3] Test scenario: Issue with priority P0, type "feature" → all fields correct
+- [ ] T072 [US3] Test scenario: Issue with dependencies → dependency list includes blockers (deferred to Phase 7)
+- [X] T073 [US3] Test scenario: Issue with metadata → dates and author correctly parsed
 
 ### Implementation
 
-- [ ] T074 [US3] Implement get_issue() with BeadsIssueNotFoundError handling in src/beads/client.py
-- [ ] T075 [US3] Implement list_issues() with status/priority/type filters in src/beads/client.py
-- [ ] T076 [US3] Add limit parameter support to list_issues()
-- [ ] T077 [US3] Run all US3 tests and verify 100% pass rate
+- [X] T074 [US3] Implement get_issue() with BeadsIssueNotFoundError handling in src/beads/client.py (completed in Phase 3)
+- [X] T075 [US3] Implement list_issues() with status/priority/type filters in src/beads/client.py
+- [X] T076 [US3] Add limit parameter support to list_issues()
+- [X] T077 [US3] Run all US3 tests and verify 100% pass rate (12 unit tests passing)
 
 ### Integration & Validation
 
-- [ ] T078 [US3] Run integration tests with various filter combinations
-- [ ] T079 [US3] Verify CLI overhead < 100ms per call (SC-001)
-- [ ] T080 [US3] Create example script demonstrating context-aware planning in examples/plan_work.py
+- [X] T078 [US3] Run integration tests with various filter combinations
+- [X] T079 [US3] Verify CLI overhead < 100ms per call (SC-001) - included in test suite
+- [X] T080 [US3] Create example script demonstrating context-aware planning in examples/plan_work.py
 
 **US3 Complete**: ✅ Orchestrators can retrieve full issue context for smart planning
 

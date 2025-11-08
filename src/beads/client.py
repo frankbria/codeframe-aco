@@ -343,6 +343,80 @@ class BeadsClient:
 
         return self.update_issue_status(issue_id, IssueStatus.CLOSED)
 
+    # T075-T076: List issues with filtering support
+    def list_issues(
+        self,
+        status: Optional[IssueStatus] = None,
+        priority: Optional[int] = None,
+        issue_type: Optional[IssueType] = None,
+        assignee: Optional[str] = None,
+        limit: Optional[int] = None
+    ) -> List[Issue]:
+        """List issues with optional filtering.
+
+        Query all issues or filter by status, priority, type, or assignee.
+        Supports combining multiple filters for precise queries.
+
+        Args:
+            status: Filter by issue status (open, in_progress, blocked, closed)
+            priority: Filter by priority (0-4)
+            issue_type: Filter by issue type (bug, feature, task, epic, chore)
+            assignee: Filter by assignee username
+            limit: Maximum number of issues to return
+
+        Returns:
+            List of Issue objects matching the filters
+
+        Raises:
+            ValueError: If priority is out of range (0-4)
+            BeadsCommandError: If bd list command fails
+
+        Example:
+            >>> client = BeadsClient()
+            >>> # Get all open bugs
+            >>> bugs = client.list_issues(
+            ...     status=IssueStatus.OPEN,
+            ...     issue_type=IssueType.BUG
+            ... )
+            >>> # Get top 5 critical issues
+            >>> critical = client.list_issues(priority=0, limit=5)
+        """
+        # Build command arguments
+        args = ['list']
+
+        # Add filters
+        if status is not None:
+            args.extend(['--status', status.value])
+
+        if priority is not None:
+            if not (0 <= priority <= 4):
+                raise ValueError("Priority must be 0-4")
+            args.extend(['--priority', str(priority)])
+
+        if issue_type is not None:
+            args.extend(['--type', issue_type.value])
+
+        if assignee is not None:
+            args.extend(['--assignee', assignee])
+
+        if limit is not None:
+            args.extend(['--limit', str(limit)])
+
+        # Execute bd list command
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        # Parse JSON result into Issue objects
+        if not result:
+            return []
+
+        # Result should be a list of issue dicts
+        issues = []
+        for issue_data in result:
+            issue = Issue.from_json(issue_data)
+            issues.append(issue)
+
+        return issues
+
 
 def create_beads_client(
     db_path: Optional[str] = None,

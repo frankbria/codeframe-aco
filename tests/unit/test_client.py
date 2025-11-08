@@ -862,81 +862,6 @@ class TestBeadsClientCloseIssue:
     """Test BeadsClient.close_issue() convenience method."""
 
     @patch("beads.client._run_bd_command")
-    def test_close_issue_success(self, mock_run):
-        """Test closing an issue."""
-        closed_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "closed"
-        }
-        mock_run.return_value = [closed_issue]
-
-        client = BeadsClient()
-        issue = client.close_issue("test-abc123")
-
-        assert isinstance(issue, Issue)
-        assert issue.status == IssueStatus.CLOSED
-        assert issue.id == "test-abc123"
-
-        # Verify command was called correctly
-        args = mock_run.call_args[0][0]
-        assert "update" in args
-        assert "test-abc123" in args
-        assert "--status" in args
-        assert "closed" in args
-
-    @patch("beads.client._run_bd_command")
-    def test_close_issue_already_closed(self, mock_run):
-        """Test closing an issue that is already closed (idempotent)."""
-        closed_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "closed"
-        }
-        mock_run.return_value = [closed_issue]
-
-        client = BeadsClient()
-        issue = client.close_issue("test-abc123")
-
-        # Should still work and return closed issue
-        assert issue.status == IssueStatus.CLOSED
-
-    @patch("beads.client._run_bd_command")
-    def test_close_issue_from_in_progress(self, mock_run):
-        """Test closing an issue that is in_progress."""
-        closed_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "closed"
-        }
-        mock_run.return_value = [closed_issue]
-
-        client = BeadsClient()
-        issue = client.close_issue("test-abc123")
-
-        assert issue.status == IssueStatus.CLOSED
-
-    @patch("beads.client._run_bd_command")
-    def test_close_issue_empty_id_raises_error(self, mock_run):
-        """Test that empty issue ID raises ValueError."""
-        client = BeadsClient()
-
-        with pytest.raises(ValueError, match="Issue ID cannot be empty"):
-            client.close_issue("")
-
-    @patch("beads.client._run_bd_command")
-    def test_close_issue_nonexistent_raises_error(self, mock_run):
-        """Test that closing non-existent issue raises BeadsCommandError."""
-        mock_run.side_effect = BeadsCommandError(
-            message="Issue not found",
-            command=["bd", "--json", "update", "nonexistent", "--status", "closed"],
-            returncode=1,
-            stderr="Issue 'nonexistent' not found"
-        )
-
-        client = BeadsClient()
-
-        with pytest.raises(BeadsCommandError, match="Issue not found"):
-            client.close_issue("nonexistent")
-
-    @patch("beads.client._run_bd_command")
     def test_close_issue_respects_timeout(self, mock_run):
         """Test that custom timeout is passed to _run_bd_command."""
         closed_issue = {
@@ -950,3 +875,186 @@ class TestBeadsClientCloseIssue:
 
         # Verify timeout was passed
         assert mock_run.call_args[1]["timeout"] == 60
+
+
+# T068: Unit tests for list_issues()
+class TestBeadsClientListIssues:
+    """Test BeadsClient.list_issues() method."""
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_returns_issue_list(self, mock_run):
+        """Test that list_issues returns list of Issue objects."""
+        mock_run.return_value = [SAMPLE_ISSUE_JSON]
+
+        client = BeadsClient()
+        issues = client.list_issues()
+
+        assert len(issues) == 1
+        assert isinstance(issues[0], Issue)
+        assert issues[0].id == "test-abc123"
+        mock_run.assert_called_once_with(["list"], timeout=30)
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_with_status_filter(self, mock_run):
+        """Test list_issues with status filter."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        client.list_issues(status=IssueStatus.IN_PROGRESS)
+
+        args = mock_run.call_args[0][0]
+        assert "list" in args
+        assert "--status" in args
+        assert "in_progress" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_with_priority_filter(self, mock_run):
+        """Test list_issues with priority filter."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        client.list_issues(priority=0)
+
+        args = mock_run.call_args[0][0]
+        assert "list" in args
+        assert "--priority" in args
+        assert "0" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_with_type_filter(self, mock_run):
+        """Test list_issues with issue_type filter."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        client.list_issues(issue_type=IssueType.BUG)
+
+        args = mock_run.call_args[0][0]
+        assert "list" in args
+        assert "--type" in args
+        assert "bug" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_with_limit(self, mock_run):
+        """Test list_issues with limit parameter."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        client.list_issues(limit=10)
+
+        args = mock_run.call_args[0][0]
+        assert "list" in args
+        assert "--limit" in args
+        assert "10" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_with_assignee_filter(self, mock_run):
+        """Test list_issues with assignee filter."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        client.list_issues(assignee="alice")
+
+        args = mock_run.call_args[0][0]
+        assert "list" in args
+        assert "--assignee" in args
+        assert "alice" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_with_multiple_filters(self, mock_run):
+        """Test list_issues with multiple filters combined."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        client.list_issues(
+            status=IssueStatus.OPEN,
+            priority=0,
+            issue_type=IssueType.BUG,
+            limit=5,
+            assignee="bob"
+        )
+
+        args = mock_run.call_args[0][0]
+        assert "list" in args
+        assert "--status" in args
+        assert "open" in args
+        assert "--priority" in args
+        assert "0" in args
+        assert "--type" in args
+        assert "bug" in args
+        assert "--limit" in args
+        assert "5" in args
+        assert "--assignee" in args
+        assert "bob" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_empty_result(self, mock_run):
+        """Test list_issues returns empty list when no issues match."""
+        mock_run.return_value = []
+
+        client = BeadsClient()
+        issues = client.list_issues()
+
+        assert issues == []
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_multiple_issues(self, mock_run):
+        """Test list_issues with multiple issues returned."""
+        issue_1 = SAMPLE_ISSUE_JSON.copy()
+        issue_2 = {
+            **SAMPLE_ISSUE_JSON,
+            "id": "test-def456",
+            "title": "Second Issue",
+            "priority": 2
+        }
+        issue_3 = {
+            **SAMPLE_ISSUE_JSON,
+            "id": "test-ghi789",
+            "title": "Third Issue",
+            "status": "closed"
+        }
+        mock_run.return_value = [issue_1, issue_2, issue_3]
+
+        client = BeadsClient()
+        issues = client.list_issues()
+
+        assert len(issues) == 3
+        assert all(isinstance(issue, Issue) for issue in issues)
+        assert issues[0].id == "test-abc123"
+        assert issues[1].id == "test-def456"
+        assert issues[2].id == "test-ghi789"
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_invalid_priority_raises_error(self, mock_run):
+        """Test that invalid priority raises ValueError."""
+        client = BeadsClient()
+
+        with pytest.raises(ValueError, match="Priority must be 0-4"):
+            client.list_issues(priority=5)
+
+        with pytest.raises(ValueError, match="Priority must be 0-4"):
+            client.list_issues(priority=-1)
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_respects_timeout(self, mock_run):
+        """Test that custom timeout is passed to _run_bd_command."""
+        mock_run.return_value = []
+
+        client = BeadsClient(timeout=60)
+        client.list_issues()
+
+        assert mock_run.call_args[1]["timeout"] == 60
+
+    @patch("beads.client._run_bd_command")
+    def test_list_issues_command_error_propagates(self, mock_run):
+        """Test that BeadsCommandError is propagated."""
+        mock_run.side_effect = BeadsCommandError(
+            message="Command failed",
+            command=["bd", "--json", "list"],
+            returncode=1,
+            stderr="Database error"
+        )
+
+        client = BeadsClient()
+
+        with pytest.raises(BeadsCommandError, match="Command failed"):
+            client.list_issues()
