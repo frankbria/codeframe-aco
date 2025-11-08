@@ -79,22 +79,44 @@ class TestCoordinateProperties:
         assert f"y-{y}" in path_str
         assert f"z-{z}" in path_str
 
-    @given(x=st.integers(max_value=0))
-    def test_invalid_x_below_minimum(self, x):
-        """Test that x values below 1 are rejected."""
+    @given(x=st.one_of(
+        # Missing hyphen separator
+        st.text(min_size=1, max_size=20, alphabet=st.characters(blacklist_characters='-')),
+        # Wrong suffix length (not exactly 3 chars)
+        st.builds(lambda p, s: f"{p}-{s}",
+                  st.text(min_size=1, max_size=10),
+                  st.text(min_size=1, max_size=10).filter(lambda s: len(s) != 3)),
+        # Uppercase letters in suffix (should be lowercase)
+        st.builds(lambda p, s: f"{p}-{s}",
+                  st.text(min_size=1, max_size=10),
+                  st.text(min_size=3, max_size=3, alphabet=st.characters(whitelist_categories=('Lu',)))),
+        # Non-alphanumeric characters in suffix
+        st.builds(lambda p, s: f"{p}-{s}",
+                  st.text(min_size=1, max_size=10),
+                  st.text(min_size=3, max_size=3, alphabet='!@#$%^&')),
+    ))
+    def test_invalid_x_malformed_beads_id(self, x):
+        """Test that malformed Beads IDs are rejected."""
         try:
             VectorCoordinate(x=x, y=1, z=1)
             # Should not reach here
-            raise AssertionError(f"Expected CoordinateValidationError for x={x}")
+            raise AssertionError(f"Expected CoordinateValidationError for malformed x={x!r}")
         except CoordinateValidationError:
             pass  # Expected
 
-    @given(x=st.integers(min_value=1001))
-    def test_invalid_x_above_maximum(self, x):
-        """Test that x values above 1000 are rejected."""
+    @given(x=st.one_of(
+        # Integer instead of string
+        st.integers(),
+        # Empty string
+        st.just(""),
+        # Only prefix, no hyphen or suffix
+        st.text(min_size=1, max_size=10, alphabet=st.characters(blacklist_characters='-')),
+    ))
+    def test_invalid_x_wrong_type_or_format(self, x):
+        """Test that non-string or wrong format x values are rejected."""
         try:
             VectorCoordinate(x=x, y=1, z=1)
-            raise AssertionError(f"Expected CoordinateValidationError for x={x}")
+            raise AssertionError(f"Expected CoordinateValidationError for x={x!r}")
         except CoordinateValidationError:
             pass  # Expected
 
