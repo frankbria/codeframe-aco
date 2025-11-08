@@ -1,18 +1,272 @@
-"""BeadsClient main interface (stub for Phase 2 completion).
+"""BeadsClient main interface for Beads Integration Layer."""
 
-This module will contain the main BeadsClient class that provides the
-public API for interacting with Beads. Currently a stub to allow
-fixture tests to pass.
-"""
+from typing import List, Optional
 
-from typing import Optional
+from beads.models import Issue, IssueType, IssueStatus
+from beads.utils import _run_bd_command
+
+
+class BeadsClient:
+    """Main interface for programmatic Beads operations.
+
+    Provides high-level methods for querying issues, managing
+    dependencies, and synchronizing state with Beads CLI.
+
+    Example:
+        >>> client = BeadsClient()
+        >>> ready = client.get_ready_issues(limit=5)
+        >>> for issue in ready:
+        ...     print(f"{issue.id}: {issue.title}")
+    """
+
+    def __init__(
+        self,
+        db_path: Optional[str] = None,
+        timeout: int = 30,
+        sandbox: bool = False
+    ):
+        """Initialize BeadsClient.
+
+        Args:
+            db_path: Path to .beads/ directory (auto-discovered if None)
+            timeout: Timeout for bd commands in seconds
+            sandbox: If True, disable daemon and Git sync for testing
+        """
+        self.db_path = db_path
+        self.timeout = timeout
+        self.sandbox = sandbox
+
+    # T043: Core get_ready_issues implementation
+    def get_ready_issues(
+        self,
+        limit: Optional[int] = None,
+        priority: Optional[int] = None,
+        issue_type: Optional[IssueType] = None
+    ) -> List[Issue]:
+        """Query unblocked issues ready for work.
+
+        Returns issues that have no blocking dependencies and are
+        in open or blocked status. Agents can select from these
+        issues for autonomous work assignment.
+
+        Args:
+            limit: Maximum number of issues to return
+            priority: Filter by priority (0-4)
+            issue_type: Filter by issue type
+
+        Returns:
+            List of Issue objects representing ready work
+
+        Raises:
+            BeadsCommandError: If bd ready command fails
+            BeadsJSONParseError: If output cannot be parsed
+            ValueError: If priority is out of range (0-4)
+
+        Example:
+            >>> client = BeadsClient()
+            >>> critical = client.get_ready_issues(priority=0, limit=3)
+            >>> next_task = min(critical, key=lambda i: i.priority)
+        """
+        # Build command arguments
+        args = ['ready']
+
+        # T044: Add filters
+        if limit is not None:
+            args.extend(['--limit', str(limit)])
+
+        if priority is not None:
+            if not (0 <= priority <= 4):
+                raise ValueError("Priority must be 0-4")
+            args.extend(['--priority', str(priority)])
+
+        if issue_type is not None:
+            args.extend(['--type', issue_type.value])
+
+        # Execute bd ready command
+        # T045: Error handling
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        # Parse JSON result into Issue objects
+        if not result:
+            return []
+
+        # Result should be a list of issue dicts
+        issues = []
+        for issue_data in result:
+            issue = Issue.from_json(issue_data)
+            issues.append(issue)
+
+        return issues
+
+    def get_issue(self, issue_id: str) -> Issue:
+        """Retrieve a single issue by ID.
+
+        Args:
+            issue_id: The unique identifier for the issue
+
+        Returns:
+            Issue object with full details
+
+        Raises:
+            ValueError: If issue_id is empty
+            BeadsCommandError: If issue not found or command fails
+            BeadsJSONParseError: If output cannot be parsed
+
+        Example:
+            >>> client = BeadsClient()
+            >>> issue = client.get_issue("codeframe-aco-abc")
+            >>> print(f"{issue.title}: {issue.status}")
+        """
+        if not issue_id:
+            raise ValueError("Issue ID cannot be empty")
+
+        args = ['show', issue_id]
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        # bd show returns a list with a single issue dict
+        if isinstance(result, list) and len(result) > 0:
+            return Issue.from_json(result[0])
+        elif isinstance(result, dict):
+            return Issue.from_json(result)
+        else:
+            raise ValueError(f"Unexpected result format from bd show: {type(result)}")
+
+    def update_issue(
+        self,
+        issue_id: str,
+        status: Optional[IssueStatus] = None,
+        priority: Optional[int] = None,
+        assignee: Optional[str] = None,
+        labels: Optional[List[str]] = None
+    ) -> Issue:
+        """Update an existing issue's fields.
+
+        Args:
+            issue_id: The unique identifier for the issue
+            status: New status for the issue
+            priority: New priority (0-4)
+            assignee: New assignee username
+            labels: New list of labels
+
+        Returns:
+            Updated Issue object
+
+        Raises:
+            ValueError: If no fields provided or invalid values
+            BeadsCommandError: If update fails
+
+        Example:
+            >>> client = BeadsClient()
+            >>> issue = client.update_issue(
+            ...     "test-abc",
+            ...     status=IssueStatus.IN_PROGRESS,
+            ...     priority=0
+            ... )
+        """
+        if not any([status, priority is not None, assignee, labels is not None]):
+            raise ValueError("At least one field must be provided for update")
+
+        if priority is not None and not (0 <= priority <= 4):
+            raise ValueError("Priority must be 0-4")
+
+        args = ['update', issue_id]
+
+        if status is not None:
+            args.extend(['--status', status.value])
+
+        if priority is not None:
+            args.extend(['--priority', str(priority)])
+
+        if assignee is not None:
+            args.extend(['--assignee', assignee])
+
+        if labels is not None:
+            # Join labels with commas or add multiple --label flags
+            for label in labels:
+                args.extend(['--label', label])
+
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        # bd update returns a list with the updated issue dict
+        if isinstance(result, list) and len(result) > 0:
+            return Issue.from_json(result[0])
+        elif isinstance(result, dict):
+            return Issue.from_json(result)
+        else:
+            raise ValueError(f"Unexpected result format from bd update: {type(result)}")
+
+    def create_issue(
+        self,
+        title: str,
+        description: str,
+        issue_type: IssueType,
+        priority: int = 2,
+        assignee: Optional[str] = None,
+        labels: Optional[List[str]] = None
+    ) -> Issue:
+        """Create a new issue in Beads.
+
+        Args:
+            title: Issue title (non-empty)
+            description: Issue description
+            issue_type: Type of issue (bug, feature, task, etc.)
+            priority: Priority level (0-4, default: 2)
+            assignee: Username to assign issue to
+            labels: List of label strings
+
+        Returns:
+            Newly created Issue object
+
+        Raises:
+            ValueError: If title is empty or priority invalid
+            BeadsCommandError: If creation fails
+
+        Example:
+            >>> client = BeadsClient()
+            >>> issue = client.create_issue(
+            ...     title="Fix authentication bug",
+            ...     description="Users cannot log in",
+            ...     issue_type=IssueType.BUG,
+            ...     priority=0
+            ... )
+        """
+        if not title:
+            raise ValueError("Title cannot be empty")
+
+        if not (0 <= priority <= 4):
+            raise ValueError("Priority must be 0-4")
+
+        args = ['create', title]
+
+        if description:
+            args.extend(['--description', description])
+
+        args.extend(['--type', issue_type.value])
+        args.extend(['--priority', str(priority)])
+
+        if assignee:
+            args.extend(['--assignee', assignee])
+
+        if labels:
+            for label in labels:
+                args.extend(['--label', label])
+
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        # bd create returns a list with the newly created issue dict
+        if isinstance(result, list) and len(result) > 0:
+            return Issue.from_json(result[0])
+        elif isinstance(result, dict):
+            return Issue.from_json(result)
+        else:
+            raise ValueError(f"Unexpected result format from bd create: {type(result)}")
 
 
 def create_beads_client(
     db_path: Optional[str] = None,
     timeout: int = 30,
     sandbox: bool = False
-):
+) -> BeadsClient:
     """Factory function to create a BeadsClient instance.
 
     Args:
@@ -23,9 +277,8 @@ def create_beads_client(
     Returns:
         BeadsClient instance
 
-    Note:
-        This is a stub implementation for Phase 2. Full implementation
-        will be added in Phase 3+ when implementing user stories.
+    Example:
+        >>> client = create_beads_client(timeout=60)
+        >>> issues = client.get_ready_issues()
     """
-    # Stub implementation
-    return {"db_path": db_path, "timeout": timeout, "sandbox": sandbox}
+    return BeadsClient(db_path=db_path, timeout=timeout, sandbox=sandbox)

@@ -11,7 +11,16 @@ This package provides:
 - JSON parsing of bd command outputs
 """
 
+from beads.models import Issue, IssueStatus, IssueType, DependencyType
+from beads.client import BeadsClient, create_beads_client
+
 __version__ = "0.1.0"
 
-# Public API exports will be added as components are implemented
-__all__ = []
+__all__ = [
+    "Issue",
+    "IssueStatus",
+    "IssueType",
+    "DependencyType",
+    "BeadsClient",
+    "create_beads_client",
+]
