@@ -208,3 +208,10 @@ Every issue cycle has three outcomes:
 - **GitHub** - Version control and CI/CD
 - **Spec-kit** - Specification and architecture development
 - **Beads** - Issue tracking with dependency management
+
+## Active Technologies
+- Python 3.11+ + subprocess (stdlib), json (stdlib), dataclasses (stdlib), typing (stdlib) (002-beads-integration)
+- Beads native storage (`.beads/` directory with Git sync) (002-beads-integration)
+
+## Recent Changes
+- 002-beads-integration: Added Python 3.11+ + subprocess (stdlib), json (stdlib), dataclasses (stdlib), typing (stdlib)
