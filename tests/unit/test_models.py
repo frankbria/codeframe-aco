@@ -145,3 +145,282 @@ class TestDependencyType:
 
         with pytest.raises(ValueError):
             DependencyType("invalid_dependency")
+
+
+# Tests for T033: Issue dataclass validation
+class TestIssueDataclass:
+    """Test Issue dataclass validation and required fields."""
+
+    def test_issue_dataclass_exists(self):
+        """Test that Issue dataclass is defined."""
+        from beads.models import Issue
+
+        assert Issue is not None
+
+    def test_issue_with_valid_data(self):
+        """Test creating Issue with all valid required fields."""
+        from beads.models import Issue, IssueStatus, IssueType
+        from datetime import datetime
+
+        issue = Issue(
+            id="test-123",
+            title="Test Issue",
+            description="Test description",
+            status=IssueStatus.OPEN,
+            priority=1,
+            issue_type=IssueType.FEATURE,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            content_hash="abc123",
+            source_repo="."
+        )
+
+        assert issue.id == "test-123"
+        assert issue.title == "Test Issue"
+        assert issue.description == "Test description"
+        assert issue.status == IssueStatus.OPEN
+        assert issue.priority == 1
+        assert issue.issue_type == IssueType.FEATURE
+        assert issue.content_hash == "abc123"
+        assert issue.source_repo == "."
+
+    def test_issue_with_optional_fields(self):
+        """Test Issue with optional assignee and labels."""
+        from beads.models import Issue, IssueStatus, IssueType
+        from datetime import datetime
+
+        issue = Issue(
+            id="test-123",
+            title="Test Issue",
+            description="Test description",
+            status=IssueStatus.OPEN,
+            priority=1,
+            issue_type=IssueType.FEATURE,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            content_hash="abc123",
+            source_repo=".",
+            assignee="user@example.com",
+            labels=["bug", "urgent"]
+        )
+
+        assert issue.assignee == "user@example.com"
+        assert issue.labels == ["bug", "urgent"]
+
+    def test_issue_validation_empty_id(self):
+        """Test that empty ID raises ValueError."""
+        from beads.models import Issue, IssueStatus, IssueType
+        from datetime import datetime
+
+        with pytest.raises(ValueError, match="Issue ID cannot be empty"):
+            Issue(
+                id="",
+                title="Test Issue",
+                description="Test description",
+                status=IssueStatus.OPEN,
+                priority=1,
+                issue_type=IssueType.FEATURE,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                content_hash="abc123",
+                source_repo="."
+            )
+
+    def test_issue_validation_empty_title(self):
+        """Test that empty title raises ValueError."""
+        from beads.models import Issue, IssueStatus, IssueType
+        from datetime import datetime
+
+        with pytest.raises(ValueError, match="Title cannot be empty"):
+            Issue(
+                id="test-123",
+                title="",
+                description="Test description",
+                status=IssueStatus.OPEN,
+                priority=1,
+                issue_type=IssueType.FEATURE,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                content_hash="abc123",
+                source_repo="."
+            )
+
+    def test_issue_validation_invalid_priority_low(self):
+        """Test that priority < 0 raises ValueError."""
+        from beads.models import Issue, IssueStatus, IssueType
+        from datetime import datetime
+
+        with pytest.raises(ValueError, match="Priority must be 0-4"):
+            Issue(
+                id="test-123",
+                title="Test Issue",
+                description="Test description",
+                status=IssueStatus.OPEN,
+                priority=-1,
+                issue_type=IssueType.FEATURE,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                content_hash="abc123",
+                source_repo="."
+            )
+
+    def test_issue_validation_invalid_priority_high(self):
+        """Test that priority > 4 raises ValueError."""
+        from beads.models import Issue, IssueStatus, IssueType
+        from datetime import datetime
+
+        with pytest.raises(ValueError, match="Priority must be 0-4"):
+            Issue(
+                id="test-123",
+                title="Test Issue",
+                description="Test description",
+                status=IssueStatus.OPEN,
+                priority=5,
+                issue_type=IssueType.FEATURE,
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                content_hash="abc123",
+                source_repo="."
+            )
+
+
+# Tests for T034: Issue.from_json() parsing
+class TestIssueFromJson:
+    """Test Issue.from_json() class method for parsing JSON."""
+
+    def test_from_json_valid_data(self):
+        """Test parsing valid JSON into Issue dataclass."""
+        from beads.models import Issue, IssueStatus, IssueType
+
+        json_data = {
+            "id": "test-abc",
+            "title": "Test Issue",
+            "description": "Test description",
+            "status": "open",
+            "priority": 1,
+            "issue_type": "feature",
+            "created_at": "2025-11-07T12:00:00Z",
+            "updated_at": "2025-11-07T13:00:00Z",
+            "content_hash": "hash123",
+            "source_repo": "."
+        }
+
+        issue = Issue.from_json(json_data)
+
+        assert issue.id == "test-abc"
+        assert issue.title == "Test Issue"
+        assert issue.description == "Test description"
+        assert issue.status == IssueStatus.OPEN
+        assert issue.priority == 1
+        assert issue.issue_type == IssueType.FEATURE
+        assert issue.content_hash == "hash123"
+        assert issue.source_repo == "."
+
+    def test_from_json_with_optional_fields(self):
+        """Test parsing JSON with optional assignee and labels."""
+        from beads.models import Issue
+
+        json_data = {
+            "id": "test-abc",
+            "title": "Test Issue",
+            "description": "Test description",
+            "status": "open",
+            "priority": 1,
+            "issue_type": "feature",
+            "created_at": "2025-11-07T12:00:00Z",
+            "updated_at": "2025-11-07T13:00:00Z",
+            "content_hash": "hash123",
+            "source_repo": ".",
+            "assignee": "user@example.com",
+            "labels": ["bug", "urgent"]
+        }
+
+        issue = Issue.from_json(json_data)
+
+        assert issue.assignee == "user@example.com"
+        assert issue.labels == ["bug", "urgent"]
+
+    def test_from_json_datetime_parsing(self):
+        """Test that datetime strings are properly parsed."""
+        from beads.models import Issue
+        from datetime import datetime
+
+        json_data = {
+            "id": "test-abc",
+            "title": "Test Issue",
+            "description": "Test description",
+            "status": "open",
+            "priority": 1,
+            "issue_type": "feature",
+            "created_at": "2025-11-07T12:30:45.123Z",
+            "updated_at": "2025-11-07T13:45:30.456Z",
+            "content_hash": "hash123",
+            "source_repo": "."
+        }
+
+        issue = Issue.from_json(json_data)
+
+        assert isinstance(issue.created_at, datetime)
+        assert isinstance(issue.updated_at, datetime)
+
+    def test_from_json_missing_optional_fields(self):
+        """Test parsing JSON without optional fields."""
+        from beads.models import Issue
+
+        json_data = {
+            "id": "test-abc",
+            "title": "Test Issue",
+            "description": "Test description",
+            "status": "open",
+            "priority": 1,
+            "issue_type": "feature",
+            "created_at": "2025-11-07T12:00:00Z",
+            "updated_at": "2025-11-07T13:00:00Z",
+            "content_hash": "hash123",
+            "source_repo": "."
+        }
+
+        issue = Issue.from_json(json_data)
+
+        assert issue.assignee is None
+        assert issue.labels is None or issue.labels == []
+
+    def test_from_json_invalid_status(self):
+        """Test that invalid status raises ValueError."""
+        from beads.models import Issue
+
+        json_data = {
+            "id": "test-abc",
+            "title": "Test Issue",
+            "description": "Test description",
+            "status": "invalid_status",
+            "priority": 1,
+            "issue_type": "feature",
+            "created_at": "2025-11-07T12:00:00Z",
+            "updated_at": "2025-11-07T13:00:00Z",
+            "content_hash": "hash123",
+            "source_repo": "."
+        }
+
+        with pytest.raises(ValueError):
+            Issue.from_json(json_data)
+
+    def test_from_json_invalid_type(self):
+        """Test that invalid issue_type raises ValueError."""
+        from beads.models import Issue
+
+        json_data = {
+            "id": "test-abc",
+            "title": "Test Issue",
+            "description": "Test description",
+            "status": "open",
+            "priority": 1,
+            "issue_type": "invalid_type",
+            "created_at": "2025-11-07T12:00:00Z",
+            "updated_at": "2025-11-07T13:00:00Z",
+            "content_hash": "hash123",
+            "source_repo": "."
+        }
+
+        with pytest.raises(ValueError):
+            Issue.from_json(json_data)

@@ -96,11 +96,11 @@ TaskID: Sequential number (T001, T002, ...)
 
 ### Data Models
 
-- [ ] T033 [US1] Write tests for Issue dataclass validation in tests/unit/test_models.py
-- [ ] T034 [US1] Write tests for Issue.from_json() parsing in tests/unit/test_models.py
-- [ ] T035 [US1] Implement Issue dataclass with validation in src/beads/models.py
-- [ ] T036 [US1] Implement Issue.from_json() with datetime parsing in src/beads/models.py
-- [ ] T037 [US1] Run tests for Issue model and verify 100% pass rate
+- [X] T033 [US1] Write tests for Issue dataclass validation in tests/unit/test_models.py
+- [X] T034 [US1] Write tests for Issue.from_json() parsing in tests/unit/test_models.py
+- [X] T035 [US1] Implement Issue dataclass with validation in src/beads/models.py
+- [X] T036 [US1] Implement Issue.from_json() with datetime parsing in src/beads/models.py
+- [X] T037 [US1] Run tests for Issue model and verify 100% pass rate
 
 ### Client Methods (Tests First)
 
