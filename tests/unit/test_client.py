@@ -667,3 +667,286 @@ class TestBeadsClientEdgeCases:
         # Should not add any --label flags for empty list
         args = mock_run.call_args[0][0]
         # Labels parameter was provided but empty
+
+
+# T051: Unit tests for update_issue_status()
+class TestBeadsClientUpdateIssueStatus:
+    """Test BeadsClient.update_issue_status() convenience method."""
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_status_to_in_progress(self, mock_run):
+        """Test updating issue status to in_progress."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "in_progress"
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_status("test-abc123", IssueStatus.IN_PROGRESS)
+
+        assert isinstance(issue, Issue)
+        assert issue.status == IssueStatus.IN_PROGRESS
+        assert issue.id == "test-abc123"
+
+        # Verify command was called correctly
+        args = mock_run.call_args[0][0]
+        assert "update" in args
+        assert "test-abc123" in args
+        assert "--status" in args
+        assert "in_progress" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_status_to_closed(self, mock_run):
+        """Test updating issue status to closed."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "closed"
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_status("test-abc123", IssueStatus.CLOSED)
+
+        assert issue.status == IssueStatus.CLOSED
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_status_to_blocked(self, mock_run):
+        """Test updating issue status to blocked."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "blocked"
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_status("test-abc123", IssueStatus.BLOCKED)
+
+        assert issue.status == IssueStatus.BLOCKED
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_status_to_open(self, mock_run):
+        """Test updating issue status to open."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "open"
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_status("test-abc123", IssueStatus.OPEN)
+
+        assert issue.status == IssueStatus.OPEN
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_status_empty_id_raises_error(self, mock_run):
+        """Test that empty issue ID raises ValueError."""
+        client = BeadsClient()
+
+        with pytest.raises(ValueError, match="Issue ID cannot be empty"):
+            client.update_issue_status("", IssueStatus.IN_PROGRESS)
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_status_command_error_propagates(self, mock_run):
+        """Test that BeadsCommandError is propagated."""
+        mock_run.side_effect = BeadsCommandError(
+            message="Issue not found",
+            command=["bd", "--json", "update", "nonexistent", "--status", "in_progress"],
+            returncode=1,
+            stderr="Issue 'nonexistent' not found"
+        )
+
+        client = BeadsClient()
+
+        with pytest.raises(BeadsCommandError, match="Issue not found"):
+            client.update_issue_status("nonexistent", IssueStatus.IN_PROGRESS)
+
+
+# T052: Unit tests for update_issue_priority()
+class TestBeadsClientUpdateIssuePriority:
+    """Test BeadsClient.update_issue_priority() convenience method."""
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_to_zero(self, mock_run):
+        """Test updating issue priority to 0 (critical)."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "priority": 0
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_priority("test-abc123", 0)
+
+        assert isinstance(issue, Issue)
+        assert issue.priority == 0
+        assert issue.id == "test-abc123"
+
+        # Verify command was called correctly
+        args = mock_run.call_args[0][0]
+        assert "update" in args
+        assert "test-abc123" in args
+        assert "--priority" in args
+        assert "0" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_to_four(self, mock_run):
+        """Test updating issue priority to 4 (backlog)."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "priority": 4
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_priority("test-abc123", 4)
+
+        assert issue.priority == 4
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_to_two(self, mock_run):
+        """Test updating issue priority to 2 (medium)."""
+        updated_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "priority": 2
+        }
+        mock_run.return_value = [updated_issue]
+
+        client = BeadsClient()
+        issue = client.update_issue_priority("test-abc123", 2)
+
+        assert issue.priority == 2
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_invalid_high_raises_error(self, mock_run):
+        """Test that priority > 4 raises ValueError."""
+        client = BeadsClient()
+
+        with pytest.raises(ValueError, match="Priority must be 0-4"):
+            client.update_issue_priority("test-abc123", 5)
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_invalid_negative_raises_error(self, mock_run):
+        """Test that priority < 0 raises ValueError."""
+        client = BeadsClient()
+
+        with pytest.raises(ValueError, match="Priority must be 0-4"):
+            client.update_issue_priority("test-abc123", -1)
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_empty_id_raises_error(self, mock_run):
+        """Test that empty issue ID raises ValueError."""
+        client = BeadsClient()
+
+        with pytest.raises(ValueError, match="Issue ID cannot be empty"):
+            client.update_issue_priority("", 2)
+
+    @patch("beads.client._run_bd_command")
+    def test_update_issue_priority_command_error_propagates(self, mock_run):
+        """Test that BeadsCommandError is propagated."""
+        mock_run.side_effect = BeadsCommandError(
+            message="Issue not found",
+            command=["bd", "--json", "update", "nonexistent", "--priority", "2"],
+            returncode=1,
+            stderr="Issue 'nonexistent' not found"
+        )
+
+        client = BeadsClient()
+
+        with pytest.raises(BeadsCommandError, match="Issue not found"):
+            client.update_issue_priority("nonexistent", 2)
+
+
+# T053: Unit tests for close_issue()
+class TestBeadsClientCloseIssue:
+    """Test BeadsClient.close_issue() convenience method."""
+
+    @patch("beads.client._run_bd_command")
+    def test_close_issue_success(self, mock_run):
+        """Test closing an issue."""
+        closed_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "closed"
+        }
+        mock_run.return_value = [closed_issue]
+
+        client = BeadsClient()
+        issue = client.close_issue("test-abc123")
+
+        assert isinstance(issue, Issue)
+        assert issue.status == IssueStatus.CLOSED
+        assert issue.id == "test-abc123"
+
+        # Verify command was called correctly
+        args = mock_run.call_args[0][0]
+        assert "update" in args
+        assert "test-abc123" in args
+        assert "--status" in args
+        assert "closed" in args
+
+    @patch("beads.client._run_bd_command")
+    def test_close_issue_already_closed(self, mock_run):
+        """Test closing an issue that is already closed (idempotent)."""
+        closed_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "closed"
+        }
+        mock_run.return_value = [closed_issue]
+
+        client = BeadsClient()
+        issue = client.close_issue("test-abc123")
+
+        # Should still work and return closed issue
+        assert issue.status == IssueStatus.CLOSED
+
+    @patch("beads.client._run_bd_command")
+    def test_close_issue_from_in_progress(self, mock_run):
+        """Test closing an issue that is in_progress."""
+        closed_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "closed"
+        }
+        mock_run.return_value = [closed_issue]
+
+        client = BeadsClient()
+        issue = client.close_issue("test-abc123")
+
+        assert issue.status == IssueStatus.CLOSED
+
+    @patch("beads.client._run_bd_command")
+    def test_close_issue_empty_id_raises_error(self, mock_run):
+        """Test that empty issue ID raises ValueError."""
+        client = BeadsClient()
+
+        with pytest.raises(ValueError, match="Issue ID cannot be empty"):
+            client.close_issue("")
+
+    @patch("beads.client._run_bd_command")
+    def test_close_issue_nonexistent_raises_error(self, mock_run):
+        """Test that closing non-existent issue raises BeadsCommandError."""
+        mock_run.side_effect = BeadsCommandError(
+            message="Issue not found",
+            command=["bd", "--json", "update", "nonexistent", "--status", "closed"],
+            returncode=1,
+            stderr="Issue 'nonexistent' not found"
+        )
+
+        client = BeadsClient()
+
+        with pytest.raises(BeadsCommandError, match="Issue not found"):
+            client.close_issue("nonexistent")
+
+    @patch("beads.client._run_bd_command")
+    def test_close_issue_respects_timeout(self, mock_run):
+        """Test that custom timeout is passed to _run_bd_command."""
+        closed_issue = {
+            **SAMPLE_ISSUE_JSON,
+            "status": "closed"
+        }
+        mock_run.return_value = [closed_issue]
+
+        client = BeadsClient(timeout=60)
+        client.close_issue("test-abc123")
+
+        # Verify timeout was passed
+        assert mock_run.call_args[1]["timeout"] == 60

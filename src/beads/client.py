@@ -261,6 +261,88 @@ class BeadsClient:
         else:
             raise ValueError(f"Unexpected result format from bd create: {type(result)}")
 
+    # T058: Convenience method for updating issue status
+    def update_issue_status(self, issue_id: str, status: IssueStatus) -> Issue:
+        """Update an issue's status.
+
+        Convenience method that wraps update_issue() for status-only updates.
+
+        Args:
+            issue_id: The unique identifier for the issue
+            status: New status for the issue
+
+        Returns:
+            Updated Issue object
+
+        Raises:
+            ValueError: If issue_id is empty
+            BeadsCommandError: If update fails or issue not found
+
+        Example:
+            >>> client = BeadsClient()
+            >>> issue = client.update_issue_status(
+            ...     "test-abc",
+            ...     IssueStatus.IN_PROGRESS
+            ... )
+        """
+        if not issue_id:
+            raise ValueError("Issue ID cannot be empty")
+
+        return self.update_issue(issue_id, status=status)
+
+    # T059: Convenience method for updating issue priority
+    def update_issue_priority(self, issue_id: str, priority: int) -> Issue:
+        """Update an issue's priority.
+
+        Convenience method that wraps update_issue() for priority-only updates.
+
+        Args:
+            issue_id: The unique identifier for the issue
+            priority: New priority (0-4)
+
+        Returns:
+            Updated Issue object
+
+        Raises:
+            ValueError: If issue_id is empty or priority out of range
+            BeadsCommandError: If update fails or issue not found
+
+        Example:
+            >>> client = BeadsClient()
+            >>> issue = client.update_issue_priority("test-abc", 0)
+        """
+        if not issue_id:
+            raise ValueError("Issue ID cannot be empty")
+
+        # Validation happens in update_issue
+        return self.update_issue(issue_id, priority=priority)
+
+    # T060: Convenience method for closing issues
+    def close_issue(self, issue_id: str) -> Issue:
+        """Close an issue by setting its status to closed.
+
+        Convenience method that wraps update_issue_status() for closing issues.
+
+        Args:
+            issue_id: The unique identifier for the issue
+
+        Returns:
+            Updated Issue object with status=CLOSED
+
+        Raises:
+            ValueError: If issue_id is empty
+            BeadsCommandError: If update fails or issue not found
+
+        Example:
+            >>> client = BeadsClient()
+            >>> issue = client.close_issue("test-abc")
+            >>> assert issue.status == IssueStatus.CLOSED
+        """
+        if not issue_id:
+            raise ValueError("Issue ID cannot be empty")
+
+        return self.update_issue_status(issue_id, IssueStatus.CLOSED)
+
 
 def create_beads_client(
     db_path: Optional[str] = None,

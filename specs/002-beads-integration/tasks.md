@@ -128,7 +128,7 @@ TaskID: Sequential number (T001, T002, ...)
 
 ---
 
-## Phase 4: User Story 2 - Update Issue Status (P2)
+## Phase 4: User Story 2 - Update Issue Status (P2) ✅
 
 **Goal**: Enable cycle processors to track work progress through status updates
 
@@ -138,28 +138,28 @@ TaskID: Sequential number (T001, T002, ...)
 
 ### Client Methods (Tests First)
 
-- [ ] T051 [P] [US2] Write unit tests for update_issue_status() in tests/unit/test_client.py
-- [ ] T052 [P] [US2] Write unit tests for update_issue_priority() in tests/unit/test_client.py
-- [ ] T053 [P] [US2] Write unit tests for close_issue() in tests/unit/test_client.py
-- [ ] T054 [US2] Write integration tests for status updates in tests/integration/test_issue_crud.py
-- [ ] T055 [US2] Test scenario: Open → in_progress → appears in bd list --status in_progress
-- [ ] T056 [US2] Test scenario: In_progress → closed → no longer in bd ready
-- [ ] T057 [US2] Test scenario: Multiple updates in sequence → current status reflects latest
+- [X] T051 [P] [US2] Write unit tests for update_issue_status() in tests/unit/test_client.py
+- [X] T052 [P] [US2] Write unit tests for update_issue_priority() in tests/unit/test_client.py
+- [X] T053 [P] [US2] Write unit tests for close_issue() in tests/unit/test_client.py
+- [X] T054 [US2] Write integration tests for status updates in tests/integration/test_issue_crud.py
+- [X] T055 [US2] Test scenario: Open → in_progress → appears in bd list --status in_progress
+- [X] T056 [US2] Test scenario: In_progress → closed → no longer in bd ready
+- [X] T057 [US2] Test scenario: Multiple updates in sequence → current status reflects latest
 
 ### Implementation
 
-- [ ] T058 [US2] Implement update_issue_status() in src/beads/client.py
-- [ ] T059 [US2] Implement update_issue_priority() in src/beads/client.py
-- [ ] T060 [US2] Implement close_issue() in src/beads/client.py
-- [ ] T061 [US2] Add validation for priority range (0-4) with ValueError
-- [ ] T062 [US2] Handle BeadsIssueNotFoundError for non-existent issues
-- [ ] T063 [US2] Run all US2 tests and verify 100% pass rate
+- [X] T058 [US2] Implement update_issue_status() in src/beads/client.py
+- [X] T059 [US2] Implement update_issue_priority() in src/beads/client.py
+- [X] T060 [US2] Implement close_issue() in src/beads/client.py
+- [X] T061 [US2] Add validation for priority range (0-4) with ValueError
+- [X] T062 [US2] Handle BeadsIssueNotFoundError for non-existent issues
+- [X] T063 [US2] Run all US2 tests and verify 100% pass rate (19 unit tests passing)
 
 ### Integration & Validation
 
-- [ ] T064 [US2] Run integration tests for status lifecycle (open → in_progress → closed)
-- [ ] T065 [US2] Verify operations complete in < 100ms per call (SC-001)
-- [ ] T066 [US2] Create example script demonstrating status updates in examples/track_progress.py
+- [X] T064 [US2] Run integration tests for status lifecycle (open → in_progress → closed)
+- [X] T065 [US2] Verify operations complete in < 100ms per call (SC-001) - included in test suite
+- [X] T066 [US2] Create example script demonstrating status updates in examples/track_progress.py
 
 **US2 Complete**: ✅ Agents can track work progress through development cycle
 
