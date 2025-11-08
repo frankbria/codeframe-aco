@@ -267,7 +267,7 @@ class TestMemoryIndexConcurrency:
         def query_before_point(issue_id: str, y_thresh: int, iterations: int):
             try:
                 for _ in range(iterations):
-                    results = index.query_partial_order(issue_id, y_thresh, mock_dag_order)
+                    results = index.query_partial_order(issue_id, y_thresh, dag_order=mock_dag_order)
                     query_counts.append(len(results))
             except Exception as e:
                 errors.append(e)
