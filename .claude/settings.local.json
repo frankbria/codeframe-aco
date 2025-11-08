@@ -39,7 +39,10 @@
       "Bash(poetry run pytest:*)",
       "Bash(.venv/bin/pytest tests/unit/test_query.py::TestQueryRange::test_query_by_x_range -xvs)",
       "Bash(.venv/bin/pytest tests/unit/test_query.py::TestPartialOrderQueries -xvs)",
-      "Bash(.venv/bin/pytest:*)"
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(chmod:*)",
+      "Bash(git show-ref:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
