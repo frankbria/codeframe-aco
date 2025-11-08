@@ -42,7 +42,8 @@
       "Bash(.venv/bin/pytest:*)",
       "Bash(chmod:*)",
       "Bash(git show-ref:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": [],
     "ask": []
