@@ -35,7 +35,10 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Verify Beads installation
-        run: which bd && bd --version
+        run: |
+          which bd
+          export BEADS_DIR="${GITHUB_WORKSPACE}/.beads"
+          bd --version
 
       - name: Run linting (ruff)
         run: ruff check src/ tests/
