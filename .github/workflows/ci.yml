@@ -26,7 +26,7 @@ jobs:
 
       - name: Install Beads CLI
         run: |
-          curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | bash
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
