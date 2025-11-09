@@ -4,7 +4,6 @@ This module provides a hierarchy of exceptions for handling various
 error scenarios when interacting with the Beads CLI.
 """
 
-from typing import List, Optional
 
 
 # T016: Base exception
@@ -32,9 +31,9 @@ class BeadsCommandError(BeadsError):
     def __init__(
         self,
         message: str,
-        command: Optional[List[str]] = None,
-        returncode: Optional[int] = None,
-        stderr: Optional[str] = None,
+        command: list[str] | None = None,
+        returncode: int | None = None,
+        stderr: str | None = None,
     ):
         super().__init__(message)
         self.command = command or []
@@ -66,8 +65,8 @@ class BeadsJSONParseError(BeadsError):
     def __init__(
         self,
         message: str,
-        json_content: Optional[str] = None,
-        original_error: Optional[str] = None,
+        json_content: str | None = None,
+        original_error: str | None = None,
     ):
         super().__init__(message)
         self.json_content = json_content or ""
@@ -110,7 +109,7 @@ class BeadsDependencyCycleError(BeadsError):
         cycle_path: List of issue IDs forming the cycle (first == last)
     """
 
-    def __init__(self, cycle_path: List[str]):
+    def __init__(self, cycle_path: list[str]):
         self.cycle_path = cycle_path
         cycle_str = " → ".join(cycle_path)
         super().__init__(f"Circular dependency detected: {cycle_str}")

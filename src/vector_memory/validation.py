@@ -116,12 +116,12 @@ class MemoryIndex:
             # Check x range
             if x_range is not None:
                 x_min, x_max = x_range
-                
+
                 if dag_order is not None:
                     # Use DAG topological sort positions for comparison
-                    x_pos = dag_order.get(x, float('inf'))
-                    x_min_pos = dag_order.get(x_min, float('-inf'))
-                    x_max_pos = dag_order.get(x_max, float('inf'))
+                    x_pos = dag_order.get(x, float("inf"))
+                    x_min_pos = dag_order.get(x_min, float("-inf"))
+                    x_max_pos = dag_order.get(x_max, float("inf"))
                     if not (x_min_pos <= x_pos <= x_max_pos):
                         continue
                 else:
@@ -146,7 +146,11 @@ class MemoryIndex:
         return sorted(results)
 
     def query_partial_order(
-        self, x_threshold: str, y_threshold: int, z_filter: int | None = None, dag_order: dict[str, int] | None = None
+        self,
+        x_threshold: str,
+        y_threshold: int,
+        z_filter: int | None = None,
+        dag_order: dict[str, int] | None = None,
     ) -> list[tuple[str, int, int]]:
         """
         Find all coordinates where (x,y) < (x_threshold, y_threshold).
@@ -169,15 +173,15 @@ class MemoryIndex:
             # Means: x < x_threshold OR (x == x_threshold AND y < y_threshold)
             if dag_order is not None:
                 # Use DAG topological sort positions
-                x_pos = dag_order.get(x, float('inf'))
-                x_threshold_pos = dag_order.get(x_threshold, float('inf'))
+                x_pos = dag_order.get(x, float("inf"))
+                x_threshold_pos = dag_order.get(x_threshold, float("inf"))
                 x_less = x_pos < x_threshold_pos
                 x_equal = x == x_threshold
             else:
                 # Fallback: lexicographic string comparison
                 x_less = x < x_threshold
                 x_equal = x == x_threshold
-            
+
             if x_less or (x_equal and y < y_threshold):
                 # Apply z filter if specified
                 if z_filter is None or z == z_filter:
@@ -238,7 +242,7 @@ class MemoryIndex:
             Number of decisions loaded
         """
         import json
-        
+
         # Clear existing index
         self.coords.clear()
         self.metadata.clear()
@@ -258,9 +262,9 @@ class MemoryIndex:
 
                 # Load metadata (timestamp, agent_id) from file WITHOUT loading full content
                 # This is the lazy loading optimization - we only load what we need for indexing
-                with open(json_file, "r", encoding="utf-8") as f:
+                with open(json_file, encoding="utf-8") as f:
                     data = json.load(f)
-                
+
                 # Extract only metadata fields, not the full content
                 metadata = {
                     "timestamp": data.get("timestamp", ""),

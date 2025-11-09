@@ -72,7 +72,7 @@ class GitPersistence:
                 capture_output=True,
                 text=True,
             )
-            
+
             # Verify commit was actually created
             try:
                 head_after = subprocess.run(
@@ -82,7 +82,7 @@ class GitPersistence:
                     capture_output=True,
                     text=True,
                 ).stdout.strip()
-                
+
                 if head_before is not None and head_after == head_before:
                     raise RuntimeError(
                         "git commit succeeded but HEAD did not change - commit may have failed silently"
@@ -91,9 +91,9 @@ class GitPersistence:
                 raise RuntimeError(
                     f"Failed to verify commit was created: {verify_error}"
                 ) from verify_error
-            
+
             return True
-            
+
         except subprocess.CalledProcessError as e:
             # Check if it's just "nothing to commit"
             if "nothing to commit" in e.stdout or "nothing to commit" in e.stderr:

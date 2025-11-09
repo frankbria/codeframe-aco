@@ -1,8 +1,8 @@
 """Unit tests for data models (Issue, enums, dependencies)."""
 
-import pytest
 from datetime import datetime
-from enum import Enum
+
+import pytest
 
 
 # Tests for T009: IssueStatus enum
@@ -13,10 +13,10 @@ class TestIssueStatus:
         """Test that all required status values exist."""
         from beads.models import IssueStatus
 
-        assert hasattr(IssueStatus, 'OPEN')
-        assert hasattr(IssueStatus, 'IN_PROGRESS')
-        assert hasattr(IssueStatus, 'BLOCKED')
-        assert hasattr(IssueStatus, 'CLOSED')
+        assert hasattr(IssueStatus, "OPEN")
+        assert hasattr(IssueStatus, "IN_PROGRESS")
+        assert hasattr(IssueStatus, "BLOCKED")
+        assert hasattr(IssueStatus, "CLOSED")
 
     def test_issue_status_string_values(self):
         """Test that enum values match Beads JSON format."""
@@ -60,11 +60,11 @@ class TestIssueType:
         """Test that all required type values exist."""
         from beads.models import IssueType
 
-        assert hasattr(IssueType, 'BUG')
-        assert hasattr(IssueType, 'FEATURE')
-        assert hasattr(IssueType, 'TASK')
-        assert hasattr(IssueType, 'EPIC')
-        assert hasattr(IssueType, 'CHORE')
+        assert hasattr(IssueType, "BUG")
+        assert hasattr(IssueType, "FEATURE")
+        assert hasattr(IssueType, "TASK")
+        assert hasattr(IssueType, "EPIC")
+        assert hasattr(IssueType, "CHORE")
 
     def test_issue_type_string_values(self):
         """Test that enum values match Beads JSON format."""
@@ -109,10 +109,10 @@ class TestDependencyType:
         """Test that all required dependency type values exist."""
         from beads.models import DependencyType
 
-        assert hasattr(DependencyType, 'BLOCKS')
-        assert hasattr(DependencyType, 'RELATED')
-        assert hasattr(DependencyType, 'PARENT_CHILD')
-        assert hasattr(DependencyType, 'DISCOVERED_FROM')
+        assert hasattr(DependencyType, "BLOCKS")
+        assert hasattr(DependencyType, "RELATED")
+        assert hasattr(DependencyType, "PARENT_CHILD")
+        assert hasattr(DependencyType, "DISCOVERED_FROM")
 
     def test_dependency_type_string_values(self):
         """Test that enum values match Beads JSON format."""
@@ -160,7 +160,6 @@ class TestIssueDataclass:
     def test_issue_with_valid_data(self):
         """Test creating Issue with all valid required fields."""
         from beads.models import Issue, IssueStatus, IssueType
-        from datetime import datetime
 
         issue = Issue(
             id="test-123",
@@ -172,7 +171,7 @@ class TestIssueDataclass:
             created_at=datetime.now(),
             updated_at=datetime.now(),
             content_hash="abc123",
-            source_repo="."
+            source_repo=".",
         )
 
         assert issue.id == "test-123"
@@ -187,7 +186,6 @@ class TestIssueDataclass:
     def test_issue_with_optional_fields(self):
         """Test Issue with optional assignee and labels."""
         from beads.models import Issue, IssueStatus, IssueType
-        from datetime import datetime
 
         issue = Issue(
             id="test-123",
@@ -201,7 +199,7 @@ class TestIssueDataclass:
             content_hash="abc123",
             source_repo=".",
             assignee="user@example.com",
-            labels=["bug", "urgent"]
+            labels=["bug", "urgent"],
         )
 
         assert issue.assignee == "user@example.com"
@@ -210,7 +208,6 @@ class TestIssueDataclass:
     def test_issue_validation_empty_id(self):
         """Test that empty ID raises ValueError."""
         from beads.models import Issue, IssueStatus, IssueType
-        from datetime import datetime
 
         with pytest.raises(ValueError, match="Issue ID cannot be empty"):
             Issue(
@@ -223,13 +220,12 @@ class TestIssueDataclass:
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
                 content_hash="abc123",
-                source_repo="."
+                source_repo=".",
             )
 
     def test_issue_validation_empty_title(self):
         """Test that empty title raises ValueError."""
         from beads.models import Issue, IssueStatus, IssueType
-        from datetime import datetime
 
         with pytest.raises(ValueError, match="Title cannot be empty"):
             Issue(
@@ -242,13 +238,12 @@ class TestIssueDataclass:
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
                 content_hash="abc123",
-                source_repo="."
+                source_repo=".",
             )
 
     def test_issue_validation_invalid_priority_low(self):
         """Test that priority < 0 raises ValueError."""
         from beads.models import Issue, IssueStatus, IssueType
-        from datetime import datetime
 
         with pytest.raises(ValueError, match="Priority must be 0-4"):
             Issue(
@@ -261,13 +256,12 @@ class TestIssueDataclass:
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
                 content_hash="abc123",
-                source_repo="."
+                source_repo=".",
             )
 
     def test_issue_validation_invalid_priority_high(self):
         """Test that priority > 4 raises ValueError."""
         from beads.models import Issue, IssueStatus, IssueType
-        from datetime import datetime
 
         with pytest.raises(ValueError, match="Priority must be 0-4"):
             Issue(
@@ -280,7 +274,7 @@ class TestIssueDataclass:
                 created_at=datetime.now(),
                 updated_at=datetime.now(),
                 content_hash="abc123",
-                source_repo="."
+                source_repo=".",
             )
 
 
@@ -302,7 +296,7 @@ class TestIssueFromJson:
             "created_at": "2025-11-07T12:00:00Z",
             "updated_at": "2025-11-07T13:00:00Z",
             "content_hash": "hash123",
-            "source_repo": "."
+            "source_repo": ".",
         }
 
         issue = Issue.from_json(json_data)
@@ -332,7 +326,7 @@ class TestIssueFromJson:
             "content_hash": "hash123",
             "source_repo": ".",
             "assignee": "user@example.com",
-            "labels": ["bug", "urgent"]
+            "labels": ["bug", "urgent"],
         }
 
         issue = Issue.from_json(json_data)
@@ -343,7 +337,6 @@ class TestIssueFromJson:
     def test_from_json_datetime_parsing(self):
         """Test that datetime strings are properly parsed."""
         from beads.models import Issue
-        from datetime import datetime
 
         json_data = {
             "id": "test-abc",
@@ -355,7 +348,7 @@ class TestIssueFromJson:
             "created_at": "2025-11-07T12:30:45.123Z",
             "updated_at": "2025-11-07T13:45:30.456Z",
             "content_hash": "hash123",
-            "source_repo": "."
+            "source_repo": ".",
         }
 
         issue = Issue.from_json(json_data)
@@ -377,7 +370,7 @@ class TestIssueFromJson:
             "created_at": "2025-11-07T12:00:00Z",
             "updated_at": "2025-11-07T13:00:00Z",
             "content_hash": "hash123",
-            "source_repo": "."
+            "source_repo": ".",
         }
 
         issue = Issue.from_json(json_data)
@@ -399,7 +392,7 @@ class TestIssueFromJson:
             "created_at": "2025-11-07T12:00:00Z",
             "updated_at": "2025-11-07T13:00:00Z",
             "content_hash": "hash123",
-            "source_repo": "."
+            "source_repo": ".",
         }
 
         with pytest.raises(ValueError):
@@ -419,7 +412,7 @@ class TestIssueFromJson:
             "created_at": "2025-11-07T12:00:00Z",
             "updated_at": "2025-11-07T13:00:00Z",
             "content_hash": "hash123",
-            "source_repo": "."
+            "source_repo": ".",
         }
 
         with pytest.raises(ValueError):
@@ -435,9 +428,7 @@ class TestDependency:
         from beads.models import Dependency, DependencyType
 
         dep = Dependency(
-            blocked_id="issue-A",
-            blocker_id="issue-B",
-            dependency_type=DependencyType.BLOCKS
+            blocked_id="issue-A", blocker_id="issue-B", dependency_type=DependencyType.BLOCKS
         )
 
         assert dep.blocked_id == "issue-A"
@@ -449,11 +440,7 @@ class TestDependency:
         from beads.models import Dependency, DependencyType
 
         for dep_type in DependencyType:
-            dep = Dependency(
-                blocked_id="issue-A",
-                blocker_id="issue-B",
-                dependency_type=dep_type
-            )
+            dep = Dependency(blocked_id="issue-A", blocker_id="issue-B", dependency_type=dep_type)
             assert dep.dependency_type == dep_type
 
     def test_dependency_self_dependency_raises_error(self):
@@ -462,9 +449,7 @@ class TestDependency:
 
         with pytest.raises(ValueError, match="Issue cannot depend on itself"):
             Dependency(
-                blocked_id="issue-A",
-                blocker_id="issue-A",
-                dependency_type=DependencyType.BLOCKS
+                blocked_id="issue-A", blocker_id="issue-A", dependency_type=DependencyType.BLOCKS
             )
 
     def test_dependency_equality(self):
@@ -498,9 +483,7 @@ class TestDependencyTree:
         from beads.models import DependencyTree
 
         tree = DependencyTree(
-            issue_id="issue-A",
-            blockers=["issue-B", "issue-C"],
-            blocked_by=["issue-D", "issue-E"]
+            issue_id="issue-A", blockers=["issue-B", "issue-C"], blocked_by=["issue-D", "issue-E"]
         )
 
         assert tree.issue_id == "issue-A"
@@ -511,11 +494,7 @@ class TestDependencyTree:
         """Test DependencyTree with no dependencies."""
         from beads.models import DependencyTree
 
-        tree = DependencyTree(
-            issue_id="issue-A",
-            blockers=[],
-            blocked_by=[]
-        )
+        tree = DependencyTree(issue_id="issue-A", blockers=[], blocked_by=[])
 
         assert tree.issue_id == "issue-A"
         assert tree.blockers == []
@@ -527,11 +506,7 @@ class TestDependencyTree:
         """Test DependencyTree with single blocker."""
         from beads.models import DependencyTree
 
-        tree = DependencyTree(
-            issue_id="issue-A",
-            blockers=["issue-B"],
-            blocked_by=[]
-        )
+        tree = DependencyTree(issue_id="issue-A", blockers=["issue-B"], blocked_by=[])
 
         assert len(tree.blockers) == 1
         assert tree.blockers[0] == "issue-B"
@@ -541,11 +516,7 @@ class TestDependencyTree:
         """Test DependencyTree with single blocked issue."""
         from beads.models import DependencyTree
 
-        tree = DependencyTree(
-            issue_id="issue-A",
-            blockers=[],
-            blocked_by=["issue-C"]
-        )
+        tree = DependencyTree(issue_id="issue-A", blockers=[], blocked_by=["issue-C"])
 
         assert len(tree.blockers) == 0
         assert len(tree.blocked_by) == 1
@@ -569,7 +540,7 @@ class TestDependencyTree:
         json_data = {
             "issue_id": "issue-A",
             "blockers": ["issue-B", "issue-C"],
-            "blocked_by": ["issue-D"]
+            "blocked_by": ["issue-D"],
         }
 
         tree = DependencyTree(**json_data)

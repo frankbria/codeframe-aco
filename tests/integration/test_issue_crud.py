@@ -1,14 +1,13 @@
 """Integration tests for issue CRUD operations with real Beads database."""
 
-import pytest
 import subprocess
 import time
-import os
-from pathlib import Path
+
+import pytest
 
 from beads.client import BeadsClient
-from beads.models import IssueStatus, IssueType
 from beads.exceptions import BeadsCommandError
+from beads.models import IssueStatus, IssueType
 
 
 @pytest.fixture
@@ -19,21 +18,21 @@ def beads_client_with_test_issues(test_beads_db, monkeypatch):
 
     # Create test issues directly via bd CLI (will use current directory)
     subprocess.run(
-        ['bd', 'create', 'Test Issue 1', '--type', 'task', '--priority', '2'],
+        ["bd", "create", "Test Issue 1", "--type", "task", "--priority", "2"],
         capture_output=True,
-        check=True
+        check=True,
     )
 
     subprocess.run(
-        ['bd', 'create', 'Test Issue 2', '--type', 'feature', '--priority', '1'],
+        ["bd", "create", "Test Issue 2", "--type", "feature", "--priority", "1"],
         capture_output=True,
-        check=True
+        check=True,
     )
 
     subprocess.run(
-        ['bd', 'create', 'Test Issue 3', '--type', 'bug', '--priority', '0'],
+        ["bd", "create", "Test Issue 3", "--type", "bug", "--priority", "0"],
         capture_output=True,
-        check=True
+        check=True,
     )
 
     # Create client (will use current directory's .beads/)
@@ -141,21 +140,22 @@ class TestStatusTransitionScenarios:
         # Verify it appears in bd list --status in_progress
         # Use subprocess to verify against actual bd CLI output
         result = subprocess.run(
-            ['bd', '--json', 'list', '--status', 'in_progress'],
+            ["bd", "--json", "list", "--status", "in_progress"],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
 
         import json
+
         in_progress_issues = json.loads(result.stdout)
 
         # Find our issue in the list
         found = False
         for issue_data in in_progress_issues:
-            if issue_data['id'] == issue_id:
+            if issue_data["id"] == issue_id:
                 found = True
-                assert issue_data['status'] == 'in_progress'
+                assert issue_data["status"] == "in_progress"
                 break
 
         assert found, f"Issue {issue_id} not found in bd list --status in_progress"
@@ -322,7 +322,7 @@ class TestIssueCreation:
             title="Integration Test Issue",
             description="This is a test issue created via Python API",
             issue_type=IssueType.FEATURE,
-            priority=1
+            priority=1,
         )
 
         # Verify the issue was created
@@ -351,7 +351,7 @@ class TestIssueCreation:
             issue_type=IssueType.BUG,
             priority=0,
             assignee="testuser",
-            labels=["urgent", "backend", "security"]
+            labels=["urgent", "backend", "security"],
         )
 
         # Verify basic fields were set (note: bd create doesn't return labels in JSON)
@@ -376,14 +376,16 @@ class TestIssueCreation:
             title="Ready Issue Test",
             description="Should appear in ready list",
             issue_type=IssueType.TASK,
-            priority=2
+            priority=2,
         )
 
         # Verify it appears in ready issues
         ready_issues = client.get_ready_issues()
         ready_ids = {issue.id for issue in ready_issues}
 
-        assert new_issue.id in ready_ids, f"Newly created issue {new_issue.id} should appear in ready list"
+        assert (
+            new_issue.id in ready_ids
+        ), f"Newly created issue {new_issue.id} should appear in ready list"
 
     def test_created_issue_appears_in_list_queries(self, test_beads_db, monkeypatch):
         """Test that created issues appear in various list queries."""
@@ -395,7 +397,7 @@ class TestIssueCreation:
             title="Critical Bug",
             description="High priority bug",
             issue_type=IssueType.BUG,
-            priority=0
+            priority=0,
         )
 
         # Verify it appears in list queries
@@ -418,17 +420,11 @@ class TestIssueCreation:
 
         # Create two issues (reduced from 3 to avoid timeout)
         issue1 = client.create_issue(
-            title="Issue 1",
-            description="First issue",
-            issue_type=IssueType.FEATURE,
-            priority=1
+            title="Issue 1", description="First issue", issue_type=IssueType.FEATURE, priority=1
         )
 
         issue2 = client.create_issue(
-            title="Issue 2",
-            description="Second issue",
-            issue_type=IssueType.BUG,
-            priority=0
+            title="Issue 2", description="Second issue", issue_type=IssueType.BUG, priority=0
         )
 
         # Verify both issues were created with unique IDs
@@ -451,18 +447,16 @@ class TestIssueCreation:
             title="CLI Verification Test",
             description="Should be visible via bd CLI",
             issue_type=IssueType.TASK,
-            priority=3
+            priority=3,
         )
 
         # Verify via direct bd CLI call
         result = subprocess.run(
-            ['bd', '--json', 'show', new_issue.id],
-            capture_output=True,
-            text=True,
-            check=True
+            ["bd", "--json", "show", new_issue.id], capture_output=True, text=True, check=True
         )
 
         import json
+
         cli_result = json.loads(result.stdout)
 
         # bd show returns a list with one element
@@ -471,7 +465,7 @@ class TestIssueCreation:
         else:
             issue_data = cli_result
 
-        assert issue_data['id'] == new_issue.id
-        assert issue_data['title'] == "CLI Verification Test"
-        assert issue_data['issue_type'] == 'task'
-        assert issue_data['priority'] == 3
+        assert issue_data["id"] == new_issue.id
+        assert issue_data["title"] == "CLI Verification Test"
+        assert issue_data["issue_type"] == "task"
+        assert issue_data["priority"] == 3

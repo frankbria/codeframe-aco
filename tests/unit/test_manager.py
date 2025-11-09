@@ -211,7 +211,9 @@ class TestArchitectureLayerBehavior:
         for decision in arch_decisions:
             assert decision.coordinate.z == 1
 
-    def test_architecture_decisions_permanent_across_overwrites_attempt(self, temp_repo, mock_issue_id):
+    def test_architecture_decisions_permanent_across_overwrites_attempt(
+        self, temp_repo, mock_issue_id
+    ):
         """Test that architecture decisions remain permanent even after many overwrite attempts."""
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="test-agent")
 

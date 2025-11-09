@@ -1,14 +1,13 @@
 """Integration tests for issue query operations (get_issue and list_issues)."""
 
-import pytest
-import subprocess
 import time
 from datetime import datetime
-from pathlib import Path
+
+import pytest
 
 from beads.client import BeadsClient
-from beads.models import IssueStatus, IssueType
 from beads.exceptions import BeadsCommandError
+from beads.models import IssueStatus, IssueType
 
 
 # T069: Integration tests for get_issue()
@@ -25,7 +24,7 @@ class TestGetIssueIntegration:
             description="This is a detailed description",
             issue_type=IssueType.FEATURE,
             priority=0,
-            assignee="test-user"
+            assignee="test-user",
         )
 
         # Retrieve the issue
@@ -58,7 +57,7 @@ class TestGetIssueIntegration:
             title="Performance Test Issue",
             description="Testing get_issue performance",
             issue_type=IssueType.TASK,
-            priority=2
+            priority=2,
         )
 
         # Time the get operation
@@ -85,39 +84,47 @@ class TestListIssuesIntegration:
         issues = []
 
         # P0 feature
-        issues.append(client.create_issue(
-            title="Critical Feature",
-            description="High priority feature",
-            issue_type=IssueType.FEATURE,
-            priority=0,
-            assignee="alice"
-        ))
+        issues.append(
+            client.create_issue(
+                title="Critical Feature",
+                description="High priority feature",
+                issue_type=IssueType.FEATURE,
+                priority=0,
+                assignee="alice",
+            )
+        )
 
         # P2 bug
-        issues.append(client.create_issue(
-            title="Medium Bug",
-            description="Medium priority bug",
-            issue_type=IssueType.BUG,
-            priority=2,
-            assignee="bob"
-        ))
+        issues.append(
+            client.create_issue(
+                title="Medium Bug",
+                description="Medium priority bug",
+                issue_type=IssueType.BUG,
+                priority=2,
+                assignee="bob",
+            )
+        )
 
         # P1 task
-        issues.append(client.create_issue(
-            title="High Priority Task",
-            description="Important task",
-            issue_type=IssueType.TASK,
-            priority=1,
-            assignee="alice"
-        ))
+        issues.append(
+            client.create_issue(
+                title="High Priority Task",
+                description="Important task",
+                issue_type=IssueType.TASK,
+                priority=1,
+                assignee="alice",
+            )
+        )
 
         # P3 chore
-        issues.append(client.create_issue(
-            title="Low Priority Chore",
-            description="Maintenance work",
-            issue_type=IssueType.CHORE,
-            priority=3
-        ))
+        issues.append(
+            client.create_issue(
+                title="Low Priority Chore",
+                description="Maintenance work",
+                issue_type=IssueType.CHORE,
+                priority=3,
+            )
+        )
 
         # Update one to in_progress
         client.update_issue_status(issues[1].id, IssueStatus.IN_PROGRESS)
@@ -220,19 +227,13 @@ class TestListIssuesIntegration:
         client, created_issues = populated_db
 
         # Open issues assigned to alice
-        alice_open = client.list_issues(
-            status=IssueStatus.OPEN,
-            assignee="alice"
-        )
+        alice_open = client.list_issues(status=IssueStatus.OPEN, assignee="alice")
         assert len(alice_open) >= 1
         assert all(i.status == IssueStatus.OPEN for i in alice_open)
         assert all(i.assignee == "alice" for i in alice_open)
 
         # P0-P1 features
-        high_priority_features = client.list_issues(
-            issue_type=IssueType.FEATURE,
-            priority=0
-        )
+        high_priority_features = client.list_issues(issue_type=IssueType.FEATURE, priority=0)
         assert any(i.id == created_issues[0].id for i in high_priority_features)
 
     def test_list_issues_with_limit(self, populated_db):
@@ -274,7 +275,7 @@ class TestIssueMetadata:
             title="Metadata Test Issue",
             description="Testing datetime parsing",
             issue_type=IssueType.TASK,
-            priority=2
+            priority=2,
         )
 
         # Retrieve and verify dates

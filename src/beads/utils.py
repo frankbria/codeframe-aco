@@ -8,7 +8,7 @@ import json
 import logging
 import subprocess
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from beads.exceptions import BeadsCommandError, BeadsJSONParseError
 
@@ -17,11 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 # T025: Implement _run_bd_command with subprocess execution
-def _run_bd_command(
-    args: List[str],
-    timeout: int = 30,
-    **kwargs: Any
-) -> Dict[str, Any]:
+def _run_bd_command(args: list[str], timeout: int = 30, **kwargs: Any) -> dict[str, Any]:
     """Execute bd command with JSON output and error handling.
 
     Args:
@@ -41,7 +37,7 @@ def _run_bd_command(
         >>> issues = result  # List of issue dicts
     """
     # Build full command with JSON flag
-    cmd = ['bd', '--json'] + args
+    cmd = ["bd", "--json"] + args
 
     # Track execution time for performance monitoring (T027)
     start_time = time.perf_counter()
@@ -54,7 +50,7 @@ def _run_bd_command(
             text=True,
             timeout=timeout,
             check=False,  # Handle errors explicitly
-            **kwargs
+            **kwargs,
         )
 
         # Log execution time
@@ -67,7 +63,7 @@ def _run_bd_command(
                 message=f"bd command failed: {' '.join(args)}",
                 command=cmd,
                 returncode=result.returncode,
-                stderr=result.stderr.strip()
+                stderr=result.stderr.strip(),
             )
 
         # Handle empty output (some commands don't return JSON)
@@ -81,21 +77,22 @@ def _run_bd_command(
             raise BeadsJSONParseError(
                 message="Failed to parse JSON output from bd command",
                 json_content=result.stdout,
-                original_error=str(e)
-            )
+                original_error=str(e),
+            ) from e
 
     except subprocess.TimeoutExpired as e:
         raise BeadsCommandError(
             message=f"bd command timed out after {timeout}s",
             command=cmd,
             returncode=-1,
-            stderr=f"Timeout after {timeout} seconds"
-        )
+            stderr=f"Timeout after {timeout} seconds",
+        ) from e
 
 
 # T026: JSON parsing utilities with error handling
 
-def parse_issue_json(data: Dict[str, Any]) -> Dict[str, Any]:
+
+def parse_issue_json(data: dict[str, Any]) -> dict[str, Any]:
     """Parse and validate issue JSON data.
 
     Args:
@@ -110,8 +107,16 @@ def parse_issue_json(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     # Validate required fields
     required_fields = [
-        "id", "title", "description", "status", "priority",
-        "issue_type", "created_at", "updated_at", "content_hash", "source_repo"
+        "id",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "issue_type",
+        "created_at",
+        "updated_at",
+        "content_hash",
+        "source_repo",
     ]
 
     for field in required_fields:
@@ -125,7 +130,7 @@ def parse_issue_json(data: Dict[str, Any]) -> Dict[str, Any]:
     return data
 
 
-def parse_issues_list_json(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def parse_issues_list_json(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Parse and validate list of issues JSON data.
 
     Args:
@@ -141,7 +146,7 @@ def parse_issues_list_json(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [parse_issue_json(issue) for issue in data]
 
 
-def parse_dependency_tree_json(data: Dict[str, Any]) -> Dict[str, Any]:
+def parse_dependency_tree_json(data: dict[str, Any]) -> dict[str, Any]:
     """Parse and validate dependency tree JSON data.
 
     Args:
@@ -162,7 +167,7 @@ def parse_dependency_tree_json(data: Dict[str, Any]) -> Dict[str, Any]:
     return data
 
 
-def parse_cycles_json(data: Dict[str, Any]) -> List[List[str]]:
+def parse_cycles_json(data: dict[str, Any]) -> list[list[str]]:
     """Parse and validate cycles JSON data.
 
     Args:

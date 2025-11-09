@@ -8,9 +8,9 @@ from vector_memory.coordinate import VectorCoordinate
 from vector_memory.exceptions import (
     ConcurrencyError,
     CoordinateValidationError,
+    ImmutableLayerError,
     QueryError,
     StorageError,
-    ImmutableLayerError,
 )
 from vector_memory.persistence import GitPersistence
 from vector_memory.storage import MemoryLayer, StoredDecision
@@ -133,7 +133,7 @@ class VectorMemoryManager:
                 existing_decision = None
                 if file_path.exists():
                     existing_decision = StoredDecision.from_file(file_path)
-                
+
                 # Validate immutability rules based on actual on-disk state
                 layer.validate_write(coord, existing_decision)
 

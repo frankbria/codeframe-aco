@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from vector_memory import VectorMemoryManager, VectorCoordinate
+from vector_memory import VectorCoordinate, VectorMemoryManager
 
 
 class TestDAGOrdering:
@@ -67,14 +67,14 @@ class TestDAGOrdering:
         # DAG range (issue-d10, issue-e05) means positions (3, 2), which is invalid
         # Let's use a valid range: (issue-b02, issue-e05) = positions (0, 2)
         # Should return: issue-b02 (0), issue-c03 (1), issue-e05 (2)
-        results_dag = manager.query_range(
-            x_range=("issue-b02", "issue-e05"),
-            dag_order=dag_order
-        )
+        results_dag = manager.query_range(x_range=("issue-b02", "issue-e05"), dag_order=dag_order)
         dag_ids = [d.coordinate.x for d in results_dag]
 
-        assert dag_ids == ["issue-b02", "issue-c03", "issue-e05"], \
-            f"DAG ordering should return [issue-b02, issue-c03, issue-e05], got {dag_ids}"
+        assert dag_ids == [
+            "issue-b02",
+            "issue-c03",
+            "issue-e05",
+        ], f"DAG ordering should return [issue-b02, issue-c03, issue-e05], got {dag_ids}"
 
         # Verify issue-d10 is NOT in the result (it's outside the DAG range)
         assert "issue-d10" not in dag_ids, "issue-d10 should not be in DAG range (0, 2)"
@@ -100,19 +100,14 @@ class TestDAGOrdering:
 
         # Query partial order WITHOUT dag_order (lexicographic fallback)
         # (x,y) < ("issue-e05", 3) with lexicographic comparison
-        results_lex = manager.query_partial_order(
-            x_threshold="issue-e05",
-            y_threshold=3
-        )
+        results_lex = manager.query_partial_order(x_threshold="issue-e05", y_threshold=3)
 
         # Query partial order WITH dag_order (topological ordering)
         # (x,y) < ("issue-e05", 3) means position < 2, or (position == 2 and y < 3)
         # Should return: all decisions for issue-b02 (pos 0), issue-c03 (pos 1),
         #                and issue-e05 with y < 3 (pos 2, y in [1, 2])
         results_dag = manager.query_partial_order(
-            x_threshold="issue-e05",
-            y_threshold=3,
-            dag_order=dag_order
+            x_threshold="issue-e05", y_threshold=3, dag_order=dag_order
         )
 
         dag_coords = [(d.coordinate.x, d.coordinate.y) for d in results_dag]
@@ -128,11 +123,15 @@ class TestDAGOrdering:
         # Should include y < 3 for issue-e05
         assert ("issue-e05", 1) in dag_coords
         assert ("issue-e05", 2) in dag_coords
-        assert ("issue-e05", 3) not in dag_coords, "issue-e05 y=3 should be excluded (not < threshold)"
+        assert (
+            "issue-e05",
+            3,
+        ) not in dag_coords, "issue-e05 y=3 should be excluded (not < threshold)"
 
         # Should NOT include any issue-d10 (position 3 > position 2)
-        assert not any(x == "issue-d10" for x, _ in dag_coords), \
-            "issue-d10 should not be in partial order results"
+        assert not any(
+            x == "issue-d10" for x, _ in dag_coords
+        ), "issue-d10 should not be in partial order results"
 
     def test_dag_order_enables_correct_rollback(self, temp_repo):
         """Test that dag_order enables correct rollback for non-sequential IDs."""
@@ -159,9 +158,7 @@ class TestDAGOrdering:
         # - OR x position == 2 AND y < 3 (includes issue-c02 with y < 3)
         # Since we stored only y=2, issue-c02 y=2 is included
         rollback_decisions = manager.query_partial_order(
-            x_threshold="issue-c02",
-            y_threshold=3,
-            dag_order=dag_order
+            x_threshold="issue-c02", y_threshold=3, dag_order=dag_order
         )
 
         rollback_ids = {d.coordinate.x for d in rollback_decisions}

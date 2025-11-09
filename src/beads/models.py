@@ -7,7 +7,6 @@ representing Beads issues, dependencies, and related structures.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
 
 
 # T012: IssueStatus enum
@@ -106,8 +105,8 @@ class Issue:
     updated_at: datetime
     content_hash: str
     source_repo: str
-    assignee: Optional[str] = None
-    labels: Optional[List[str]] = field(default=None)
+    assignee: str | None = None
+    labels: list[str] | None = field(default=None)
 
     def __post_init__(self) -> None:
         """Validate Issue fields after initialization.
@@ -148,39 +147,40 @@ class Issue:
         """
         # Parse datetime strings to datetime objects
         # Beads uses RFC3339 format: 2025-11-07T12:00:00Z or with timezone offset
-        created_at_str = data['created_at']
-        updated_at_str = data['updated_at']
+        created_at_str = data["created_at"]
+        updated_at_str = data["updated_at"]
 
         # Handle both formats: with 'Z' suffix and with timezone offset
         # Python's fromisoformat can handle most ISO 8601 formats
         # Replace 'Z' with '+00:00' for Python 3.11+ compatibility
-        if created_at_str.endswith('Z'):
-            created_at_str = created_at_str[:-1] + '+00:00'
-        if updated_at_str.endswith('Z'):
-            updated_at_str = updated_at_str[:-1] + '+00:00'
+        if created_at_str.endswith("Z"):
+            created_at_str = created_at_str[:-1] + "+00:00"
+        if updated_at_str.endswith("Z"):
+            updated_at_str = updated_at_str[:-1] + "+00:00"
 
         # Remove sub-second precision beyond 6 digits if present
         # (Beads sometimes outputs nanoseconds which Python can't parse)
         import re
-        created_at_str = re.sub(r'(\.\d{6})\d+', r'\1', created_at_str)
-        updated_at_str = re.sub(r'(\.\d{6})\d+', r'\1', updated_at_str)
+
+        created_at_str = re.sub(r"(\.\d{6})\d+", r"\1", created_at_str)
+        updated_at_str = re.sub(r"(\.\d{6})\d+", r"\1", updated_at_str)
 
         created_at = datetime.fromisoformat(created_at_str)
         updated_at = datetime.fromisoformat(updated_at_str)
 
         return cls(
-            id=data['id'],
-            title=data['title'],
-            description=data.get('description', ''),
-            status=IssueStatus(data['status']),
-            priority=data['priority'],
-            issue_type=IssueType(data['issue_type']),
+            id=data["id"],
+            title=data["title"],
+            description=data.get("description", ""),
+            status=IssueStatus(data["status"]),
+            priority=data["priority"],
+            issue_type=IssueType(data["issue_type"]),
             created_at=created_at,
             updated_at=updated_at,
-            content_hash=data['content_hash'],
-            source_repo=data.get('source_repo', '.'),
-            assignee=data.get('assignee'),
-            labels=data.get('labels', [])
+            content_hash=data["content_hash"],
+            source_repo=data.get("source_repo", "."),
+            assignee=data.get("assignee"),
+            labels=data.get("labels", []),
         )
 
 
@@ -188,19 +188,19 @@ class Issue:
 @dataclass
 class Dependency:
     """Represents a relationship between two issues in the DAG.
-    
+
     A dependency connects two issues where one (blocker) must be resolved
     before the other (blocked) can proceed.
-    
+
     Attributes:
         blocked_id: ID of the issue that is blocked
         blocker_id: ID of the issue that blocks
         dependency_type: Nature of the relationship (blocks, related, etc.)
-    
+
     Business Rules:
         - blocked_id and blocker_id must be different (no self-dependencies)
         - Dependencies persist even if issues are closed
-    
+
     Example:
         >>> dep = Dependency(
         ...     blocked_id="issue-A",
@@ -208,11 +208,11 @@ class Dependency:
         ...     dependency_type=DependencyType.BLOCKS
         ... )
     """
-    
+
     blocked_id: str
     blocker_id: str
     dependency_type: DependencyType
-    
+
     def __post_init__(self):
         """Validate dependency after initialization."""
         if self.blocked_id == self.blocker_id:
@@ -223,20 +223,20 @@ class Dependency:
 @dataclass
 class DependencyTree:
     """Represents the full upstream and downstream dependency graph for an issue.
-    
+
     Contains the transitive closure of all dependencies - both issues that
     block this one (upstream) and issues that this one blocks (downstream).
-    
+
     Attributes:
         issue_id: Root issue for tree query
         blockers: Issues that block this issue (upstream dependencies)
         blocked_by: Issues blocked by this issue (downstream dependencies)
-    
+
     Business Rules:
         - Tree query returns transitive closure (all ancestors and descendants)
         - Empty lists if no dependencies exist
         - Includes all dependency types (not filtered)
-    
+
     Example:
         >>> tree = DependencyTree(
         ...     issue_id="issue-A",
@@ -245,7 +245,7 @@ class DependencyTree:
         ... )
         >>> print(f"Issue {tree.issue_id} is blocked by {len(tree.blockers)} issues")
     """
-    
+
     issue_id: str
-    blockers: List[str]
-    blocked_by: List[str]
+    blockers: list[str]
+    blocked_by: list[str]

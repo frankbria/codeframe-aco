@@ -1,8 +1,7 @@
 """Unit tests for utility functions (_run_bd_command, JSON parsing)."""
 
-import json
-import subprocess
 from unittest.mock import Mock, patch
+
 import pytest
 
 
@@ -63,8 +62,8 @@ class TestRunBdCommand:
     @patch("subprocess.run")
     def test_run_bd_command_failure_raises_command_error(self, mock_run):
         """Test that non-zero exit code raises BeadsCommandError."""
-        from beads.utils import _run_bd_command
         from beads.exceptions import BeadsCommandError
+        from beads.utils import _run_bd_command
 
         mock_result = Mock()
         mock_result.returncode = 1
@@ -78,17 +77,17 @@ class TestRunBdCommand:
         error = exc_info.value
         assert error.returncode == 1
         assert "Error: issue not found" in error.stderr
-        assert ["bd", "--json", "show", "invalid-id"] == error.command
+        assert error.command == ["bd", "--json", "show", "invalid-id"]
 
     @patch("subprocess.run")
     def test_run_bd_command_malformed_json_raises_parse_error(self, mock_run):
         """Test that invalid JSON raises BeadsJSONParseError."""
-        from beads.utils import _run_bd_command
         from beads.exceptions import BeadsJSONParseError
+        from beads.utils import _run_bd_command
 
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = '{invalid: json}'
+        mock_result.stdout = "{invalid: json}"
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
@@ -105,7 +104,7 @@ class TestRunBdCommand:
 
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = '{}'
+        mock_result.stdout = "{}"
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
@@ -123,7 +122,7 @@ class TestRunBdCommand:
 
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = '{}'
+        mock_result.stdout = "{}"
         mock_result.stderr = ""
         mock_run.return_value = mock_result
 
@@ -152,7 +151,7 @@ class TestJSONParsing:
             "created_at": "2025-11-07T12:00:00Z",
             "updated_at": "2025-11-07T12:00:00Z",
             "content_hash": "abc123",
-            "source_repo": "."
+            "source_repo": ".",
         }
 
         # This should not raise an error
@@ -187,7 +186,7 @@ class TestJSONParsing:
                 "created_at": "2025-11-07T12:00:00Z",
                 "updated_at": "2025-11-07T12:00:00Z",
                 "content_hash": "hash1",
-                "source_repo": "."
+                "source_repo": ".",
             },
             {
                 "id": "test-2",
@@ -199,8 +198,8 @@ class TestJSONParsing:
                 "created_at": "2025-11-07T12:00:00Z",
                 "updated_at": "2025-11-07T12:00:00Z",
                 "content_hash": "hash2",
-                "source_repo": "."
-            }
+                "source_repo": ".",
+            },
         ]
 
         result = parse_issues_list_json(json_data)
@@ -222,7 +221,7 @@ class TestJSONParsing:
         json_data = {
             "issue_id": "test-123",
             "blockers": ["issue-A", "issue-B"],
-            "blocked_by": ["issue-C"]
+            "blocked_by": ["issue-C"],
         }
 
         result = parse_dependency_tree_json(json_data)
@@ -237,7 +236,7 @@ class TestJSONParsing:
         json_data = {
             "cycles": [
                 ["issue-A", "issue-B", "issue-A"],
-                ["issue-X", "issue-Y", "issue-Z", "issue-X"]
+                ["issue-X", "issue-Y", "issue-Z", "issue-X"],
             ]
         }
 

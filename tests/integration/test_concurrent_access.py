@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from vector_memory import VectorMemoryManager, VectorCoordinate
+from vector_memory import VectorCoordinate, VectorMemoryManager
 from vector_memory.exceptions import ImmutableLayerError
 
 
@@ -85,7 +85,7 @@ class TestConcurrentAccess:
         # Note: Each manager instance has its own in-memory index, so they
         # don't see each other's writes until they reload. This test verifies
         # that once persisted, immutability is enforced.
-        
+
         # First, establish an immutable decision
         setup_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="setup")
         coord = VectorCoordinate(x=mock_issue_id(5), y=2, z=1)
@@ -94,7 +94,7 @@ class TestConcurrentAccess:
             content="Initial architecture decision",
             issue_context={"issue_id": "test-5"},
         )
-        
+
         errors = []
         immutable_errors = []
 
@@ -103,14 +103,14 @@ class TestConcurrentAccess:
                 # Fresh manager that loads existing state
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id=agent_id)
                 manager.load_from_git()  # Load existing decisions
-                
+
                 # Try to modify immutable coordinate
                 manager.store(
                     coord=coord,
                     content=f"Modified decision from {agent_id}",
                     issue_context={"issue_id": "test-5"},
                 )
-            except ImmutableLayerError as e:
+            except ImmutableLayerError:
                 # Expected - immutability enforced
                 immutable_errors.append(agent_id)
             except Exception as e:
@@ -171,7 +171,9 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="reader")
                 for _ in range(iterations):
-                    decisions = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(50)), z_range=(2, 2))
+                    decisions = manager.query_range(
+                        x_range=(mock_issue_id(1), mock_issue_id(50)), z_range=(2, 2)
+                    )
                     read_counts.append(len(decisions))
             except Exception as e:
                 errors.append(("reader", e))
@@ -196,7 +198,9 @@ class TestConcurrentAccess:
 
         # Final count should be 50
         final_manager = VectorMemoryManager(repo_path=temp_repo, agent_id="final")
-        final_decisions = final_manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(50)), z_range=(2, 2))
+        final_decisions = final_manager.query_range(
+            x_range=(mock_issue_id(1), mock_issue_id(50)), z_range=(2, 2)
+        )
         assert len(final_decisions) == 50
 
     def test_concurrent_query_operations(self, temp_repo, mock_issue_id):
@@ -223,7 +227,9 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="range-query")
                 for _ in range(iterations):
-                    results = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(25)), z_range=(1, 1))
+                    results = manager.query_range(
+                        x_range=(mock_issue_id(1), mock_issue_id(25)), z_range=(1, 1)
+                    )
                     query_results["range"].append(len(results))
             except Exception as e:
                 errors.append(("range-query", e))
@@ -232,7 +238,9 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id="partial-order")
                 for _ in range(iterations):
-                    results = manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=3)
+                    results = manager.query_partial_order(
+                        x_threshold=mock_issue_id(30), y_threshold=3
+                    )
                     query_results["partial_order"].append(len(results))
             except Exception as e:
                 errors.append(("partial-order", e))
@@ -288,14 +296,14 @@ class TestConcurrentAccess:
             try:
                 manager = VectorMemoryManager(repo_path=temp_repo, agent_id=agent_id)
                 manager.load_from_git()  # Load existing decisions
-                
+
                 exists_count = 0
                 # Check coordinates 1-10
                 for x in range(1, 11):
                     coord = VectorCoordinate(x=mock_issue_id(x), y=2, z=2)
                     if manager.exists(coord):
                         exists_count += 1
-                
+
                 exists_counts.append(exists_count)
             except Exception as e:
                 errors.append((agent_id, e))
@@ -404,5 +412,7 @@ class TestConcurrentAccess:
 
         # Create new manager and verify all decisions present
         verifier = VectorMemoryManager(repo_path=temp_repo, agent_id="verifier")
-        all_decisions = verifier.query_range(x_range=(mock_issue_id(1), mock_issue_id(25)), z_range=(2, 2))
+        all_decisions = verifier.query_range(
+            x_range=(mock_issue_id(1), mock_issue_id(25)), z_range=(2, 2)
+        )
         assert len(all_decisions) == 25

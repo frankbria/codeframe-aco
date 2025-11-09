@@ -291,7 +291,9 @@ class TestRollbackScenario:
             manager.store(VectorCoordinate(x=mock_issue_id(x), y=y, z=z), content)
 
         # Find only architecture decisions (z=1) before issue 5
-        arch_decisions = manager.query_partial_order(x_threshold=mock_issue_id(5), y_threshold=1, z_filter=1)
+        arch_decisions = manager.query_partial_order(
+            x_threshold=mock_issue_id(5), y_threshold=1, z_filter=1
+        )
 
         # Should get architecture decisions from issues 1, 2, 3 only
         assert len(arch_decisions) == 3
@@ -350,7 +352,9 @@ class TestRollbackScenario:
         # Store timeline
         for x in [1, 2, 3, 5, 7, 10]:
             for y in [2, 3]:
-                manager.store(VectorCoordinate(x=mock_issue_id(x), y=y, z=1), f"Decision at ({x}, {y})")
+                manager.store(
+                    VectorCoordinate(x=mock_issue_id(x), y=y, z=1), f"Decision at ({x}, {y})"
+                )
 
         # Error at (10, 3) - try rollback points
         # We stored: [1,2], [1,3], [2,2], [2,3], [3,2], [3,3], [5,2], [5,3], [7,2], [7,3], [10,2], [10,3]
@@ -362,10 +366,14 @@ class TestRollbackScenario:
         ]
 
         for x_thresh, y_thresh, expected_count in thresholds:
-            decisions = manager.query_partial_order(x_threshold=mock_issue_id(x_thresh), y_threshold=y_thresh)
+            decisions = manager.query_partial_order(
+                x_threshold=mock_issue_id(x_thresh), y_threshold=y_thresh
+            )
             assert len(decisions) == expected_count
 
             # Verify all are before threshold
             for d in decisions:
                 x, y = d.coordinate.x, d.coordinate.y
-                assert x < mock_issue_id(x_thresh) or (x == mock_issue_id(x_thresh) and y < y_thresh)
+                assert x < mock_issue_id(x_thresh) or (
+                    x == mock_issue_id(x_thresh) and y < y_thresh
+                )

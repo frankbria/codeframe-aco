@@ -8,7 +8,7 @@ class PartialOrder:
     Implements partial ordering where (x, y) < (x₁, y₁) if and only if:
     - x < x₁ (earlier issue in DAG), OR
     - x == x₁ AND y < y₁ (same issue, earlier stage)
-    
+
     Note: x-coordinates are Beads issue IDs (strings). Ordering can use either:
     - Lexicographic string comparison (default)
     - DAG topological sort positions (when dag_order provided)
@@ -16,9 +16,7 @@ class PartialOrder:
 
     @staticmethod
     def less_than(
-        coord1: tuple[str, int],
-        coord2: tuple[str, int],
-        dag_order: dict[str, int] | None = None
+        coord1: tuple[str, int], coord2: tuple[str, int], dag_order: dict[str, int] | None = None
     ) -> bool:
         """
         Check if coord1 < coord2 in partial order.
@@ -38,8 +36,8 @@ class PartialOrder:
         # Determine x-ordering
         if dag_order is not None:
             # Use DAG topological sort positions
-            x1_pos = dag_order.get(x1, float('inf'))
-            x2_pos = dag_order.get(x2, float('inf'))
+            x1_pos = dag_order.get(x1, float("inf"))
+            x2_pos = dag_order.get(x2, float("inf"))
             x_less = x1_pos < x2_pos
             x_equal = x1 == x2
         else:
@@ -51,9 +49,7 @@ class PartialOrder:
 
     @staticmethod
     def less_equal(
-        coord1: tuple[str, int],
-        coord2: tuple[str, int],
-        dag_order: dict[str, int] | None = None
+        coord1: tuple[str, int], coord2: tuple[str, int], dag_order: dict[str, int] | None = None
     ) -> bool:
         """
         Check if coord1 <= coord2 in partial order.
@@ -70,9 +66,7 @@ class PartialOrder:
 
     @staticmethod
     def comparable(
-        coord1: tuple[str, int],
-        coord2: tuple[str, int],
-        dag_order: dict[str, int] | None = None
+        coord1: tuple[str, int], coord2: tuple[str, int], dag_order: dict[str, int] | None = None
     ) -> bool:
         """
         Check if coord1 and coord2 are comparable.
@@ -87,7 +81,6 @@ class PartialOrder:
         Returns:
             True if coordinates are comparable
         """
-        return (
-            PartialOrder.less_equal(coord1, coord2, dag_order) or
-            PartialOrder.less_equal(coord2, coord1, dag_order)
+        return PartialOrder.less_equal(coord1, coord2, dag_order) or PartialOrder.less_equal(
+            coord2, coord1, dag_order
         )

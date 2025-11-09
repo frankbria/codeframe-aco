@@ -1,6 +1,5 @@
 """Unit tests for custom exception classes."""
 
-import pytest
 
 
 # Tests for T016: BeadsError base exception
@@ -51,7 +50,7 @@ class TestBeadsCommandError:
             message="Command failed",
             command=["bd", "create", "test"],
             returncode=1,
-            stderr="Error: invalid syntax"
+            stderr="Error: invalid syntax",
         )
 
         assert "Command failed" in str(error)
@@ -72,7 +71,7 @@ class TestBeadsJSONParseError:
 
     def test_beads_json_parse_error_inherits_from_beads_error(self):
         """Test that BeadsJSONParseError inherits from BeadsError."""
-        from beads.exceptions import BeadsJSONParseError, BeadsError
+        from beads.exceptions import BeadsError, BeadsJSONParseError
 
         assert issubclass(BeadsJSONParseError, BeadsError)
 
@@ -83,7 +82,7 @@ class TestBeadsJSONParseError:
         error = BeadsJSONParseError(
             message="Failed to parse JSON",
             json_content='{"invalid": json}',
-            original_error="Expecting value: line 1 column 12 (char 11)"
+            original_error="Expecting value: line 1 column 12 (char 11)",
         )
 
         assert "Failed to parse JSON" in str(error)
@@ -103,7 +102,7 @@ class TestBeadsIssueNotFoundError:
 
     def test_beads_issue_not_found_error_inherits_from_beads_error(self):
         """Test that BeadsIssueNotFoundError inherits from BeadsError."""
-        from beads.exceptions import BeadsIssueNotFoundError, BeadsError
+        from beads.exceptions import BeadsError, BeadsIssueNotFoundError
 
         assert issubclass(BeadsIssueNotFoundError, BeadsError)
 

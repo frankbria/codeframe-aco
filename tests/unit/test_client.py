@@ -1,13 +1,12 @@
 """Unit tests for BeadsClient methods with mocked subprocess calls."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime
 
-from beads.models import Issue, IssueStatus, IssueType
 from beads.client import BeadsClient, create_beads_client
-from beads.exceptions import BeadsCommandError, BeadsJSONParseError
-
+from beads.exceptions import BeadsCommandError
+from beads.models import Issue, IssueStatus, IssueType
 
 # Sample issue data for mocking
 SAMPLE_ISSUE_JSON = {
@@ -22,7 +21,7 @@ SAMPLE_ISSUE_JSON = {
     "content_hash": "abc123def456",
     "source_repo": "/home/user/project",
     "assignee": None,
-    "labels": []
+    "labels": [],
 }
 
 
@@ -58,14 +57,14 @@ class TestBeadsClientGetReadyIssues:
             "id": "test-def456",
             "title": "Second Issue",
             "priority": 0,
-            "issue_type": "bug"
+            "issue_type": "bug",
         }
         issue_3 = {
             **SAMPLE_ISSUE_JSON,
             "id": "test-ghi789",
             "title": "Third Issue",
             "priority": 2,
-            "issue_type": "task"
+            "issue_type": "task",
         }
         mock_run.return_value = [issue_1, issue_2, issue_3]
 
@@ -165,7 +164,7 @@ class TestBeadsClientGetReadyIssues:
             message="Command failed",
             command=["bd", "--json", "ready"],
             returncode=1,
-            stderr="Error message"
+            stderr="Error message",
         )
 
         client = BeadsClient()
@@ -187,10 +186,7 @@ class TestBeadsClientGetReadyIssues:
     @patch("beads.client._run_bd_command")
     def test_get_ready_issues_with_assignee(self, mock_run):
         """Test parsing issues with assignee field."""
-        issue_with_assignee = {
-            **SAMPLE_ISSUE_JSON,
-            "assignee": "john.doe"
-        }
+        issue_with_assignee = {**SAMPLE_ISSUE_JSON, "assignee": "john.doe"}
         mock_run.return_value = [issue_with_assignee]
 
         client = BeadsClient()
@@ -202,10 +198,7 @@ class TestBeadsClientGetReadyIssues:
     @patch("beads.client._run_bd_command")
     def test_get_ready_issues_with_labels(self, mock_run):
         """Test parsing issues with labels."""
-        issue_with_labels = {
-            **SAMPLE_ISSUE_JSON,
-            "labels": ["urgent", "backend", "api"]
-        }
+        issue_with_labels = {**SAMPLE_ISSUE_JSON, "labels": ["urgent", "backend", "api"]}
         mock_run.return_value = [issue_with_labels]
 
         client = BeadsClient()
@@ -239,7 +232,7 @@ class TestBeadsClientGetIssue:
             **SAMPLE_ISSUE_JSON,
             "assignee": "jane.smith",
             "labels": ["critical", "frontend"],
-            "description": "Detailed description with multiple lines\nLine 2\nLine 3"
+            "description": "Detailed description with multiple lines\nLine 2\nLine 3",
         }
         mock_run.return_value = [detailed_issue]
 
@@ -257,7 +250,7 @@ class TestBeadsClientGetIssue:
             message="Issue not found",
             command=["bd", "--json", "show", "nonexistent"],
             returncode=1,
-            stderr="Issue 'nonexistent' not found"
+            stderr="Issue 'nonexistent' not found",
         )
 
         client = BeadsClient()
@@ -302,10 +295,7 @@ class TestBeadsClientUpdateIssue:
     @patch("beads.client._run_bd_command")
     def test_update_issue_status(self, mock_run):
         """Test updating issue status."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "in_progress"
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "status": "in_progress"}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -324,10 +314,7 @@ class TestBeadsClientUpdateIssue:
     @patch("beads.client._run_bd_command")
     def test_update_issue_priority(self, mock_run):
         """Test updating issue priority."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "priority": 0
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "priority": 0}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -348,16 +335,13 @@ class TestBeadsClientUpdateIssue:
             **SAMPLE_ISSUE_JSON,
             "status": "blocked",
             "priority": 0,
-            "assignee": "team.lead"
+            "assignee": "team.lead",
         }
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
         issue = client.update_issue(
-            "test-abc123",
-            status=IssueStatus.BLOCKED,
-            priority=0,
-            assignee="team.lead"
+            "test-abc123", status=IssueStatus.BLOCKED, priority=0, assignee="team.lead"
         )
 
         assert issue.status == IssueStatus.BLOCKED
@@ -411,9 +395,7 @@ class TestBeadsClientCreateIssue:
 
         client = BeadsClient()
         issue = client.create_issue(
-            title="Test Issue",
-            description="Test description",
-            issue_type=IssueType.FEATURE
+            title="Test Issue", description="Test description", issue_type=IssueType.FEATURE
         )
 
         assert isinstance(issue, Issue)
@@ -429,10 +411,7 @@ class TestBeadsClientCreateIssue:
     @patch("beads.client._run_bd_command")
     def test_create_issue_with_priority(self, mock_run):
         """Test creating issue with priority."""
-        high_priority_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "priority": 0
-        }
+        high_priority_issue = {**SAMPLE_ISSUE_JSON, "priority": 0}
         mock_run.return_value = [high_priority_issue]
 
         client = BeadsClient()
@@ -440,7 +419,7 @@ class TestBeadsClientCreateIssue:
             title="Critical Bug",
             description="Urgent fix needed",
             issue_type=IssueType.BUG,
-            priority=0
+            priority=0,
         )
 
         assert issue.priority == 0
@@ -452,10 +431,7 @@ class TestBeadsClientCreateIssue:
     @patch("beads.client._run_bd_command")
     def test_create_issue_with_labels(self, mock_run):
         """Test creating issue with labels."""
-        labeled_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "labels": ["urgent", "backend"]
-        }
+        labeled_issue = {**SAMPLE_ISSUE_JSON, "labels": ["urgent", "backend"]}
         mock_run.return_value = [labeled_issue]
 
         client = BeadsClient()
@@ -463,7 +439,7 @@ class TestBeadsClientCreateIssue:
             title="Labeled Issue",
             description="Issue with labels",
             issue_type=IssueType.TASK,
-            labels=["urgent", "backend"]
+            labels=["urgent", "backend"],
         )
 
         assert issue.labels == ["urgent", "backend"]
@@ -477,11 +453,7 @@ class TestBeadsClientCreateIssue:
         client = BeadsClient()
 
         with pytest.raises(ValueError, match="Title cannot be empty"):
-            client.create_issue(
-                title="",
-                description="Description",
-                issue_type=IssueType.TASK
-            )
+            client.create_issue(title="", description="Description", issue_type=IssueType.TASK)
 
     @patch("beads.client._run_bd_command")
     def test_create_issue_invalid_priority_raises_error(self, mock_run):
@@ -490,10 +462,7 @@ class TestBeadsClientCreateIssue:
 
         with pytest.raises(ValueError, match="Priority must be 0-4"):
             client.create_issue(
-                title="Test",
-                description="Test",
-                issue_type=IssueType.TASK,
-                priority=5
+                title="Test", description="Test", issue_type=IssueType.TASK, priority=5
             )
 
     @patch("beads.client._run_bd_command")
@@ -502,11 +471,7 @@ class TestBeadsClientCreateIssue:
         mock_run.return_value = SAMPLE_ISSUE_JSON
 
         client = BeadsClient()
-        issue = client.create_issue(
-            title="Test",
-            description="Test",
-            issue_type=IssueType.TASK
-        )
+        issue = client.create_issue(title="Test", description="Test", issue_type=IssueType.TASK)
 
         assert isinstance(issue, Issue)
 
@@ -518,11 +483,7 @@ class TestBeadsClientCreateIssue:
         client = BeadsClient()
 
         with pytest.raises(ValueError, match="Unexpected result format"):
-            client.create_issue(
-                title="Test",
-                description="Test",
-                issue_type=IssueType.TASK
-            )
+            client.create_issue(title="Test", description="Test", issue_type=IssueType.TASK)
 
 
 class TestBeadsClientFactory:
@@ -533,21 +494,88 @@ class TestBeadsClientFactory:
         client = create_beads_client()
 
         assert isinstance(client, BeadsClient)
-        assert client.db_path is None
+        # db_path may be auto-discovered or None
         assert client.timeout == 30
         assert client.sandbox is False
 
     def test_create_beads_client_custom(self):
         """Test creating client with custom parameters."""
-        client = create_beads_client(
-            db_path="/custom/path/.beads",
-            timeout=60,
-            sandbox=True
-        )
+        client = create_beads_client(db_path="/custom/path/.beads", timeout=60, sandbox=True)
 
         assert client.db_path == "/custom/path/.beads"
         assert client.timeout == 60
         assert client.sandbox is True
+
+    def test_create_beads_client_timeout_parameter(self):
+        """Test T122: Factory respects timeout parameter."""
+        client = create_beads_client(timeout=120)
+
+        assert client.timeout == 120
+
+    def test_create_beads_client_sandbox_parameter(self):
+        """Test T124: Factory respects sandbox parameter."""
+        client = create_beads_client(sandbox=True)
+
+        assert client.sandbox is True
+
+    def test_create_beads_client_auto_discovery(self, tmp_path, monkeypatch):
+        """Test T121: Factory auto-discovers .beads/ directory."""
+        # Create a .beads directory in temp path
+        beads_dir = tmp_path / ".beads"
+        beads_dir.mkdir()
+
+        # Change to temp directory
+        monkeypatch.chdir(tmp_path)
+
+        # Create client without specifying db_path
+        client = create_beads_client()
+
+        # Should auto-discover the .beads directory
+        assert client.db_path is not None
+        assert client.db_path.endswith(".beads")
+
+    def test_create_beads_client_auto_discovery_parent_dir(self, tmp_path, monkeypatch):
+        """Test T123: Factory searches parent directories for .beads/."""
+        # Create .beads in parent directory
+        beads_dir = tmp_path / ".beads"
+        beads_dir.mkdir()
+
+        # Create subdirectory and change to it
+        sub_dir = tmp_path / "subdir" / "nested"
+        sub_dir.mkdir(parents=True)
+        monkeypatch.chdir(sub_dir)
+
+        # Create client without specifying db_path
+        client = create_beads_client()
+
+        # Should find .beads in parent directory
+        assert client.db_path is not None
+        assert client.db_path.endswith(".beads")
+
+    def test_create_beads_client_explicit_path_overrides_discovery(self, tmp_path, monkeypatch):
+        """Test that explicit db_path overrides auto-discovery."""
+        # Create .beads in temp path
+        beads_dir = tmp_path / ".beads"
+        beads_dir.mkdir()
+        monkeypatch.chdir(tmp_path)
+
+        # Create client with explicit path
+        explicit_path = "/explicit/path/.beads"
+        client = create_beads_client(db_path=explicit_path)
+
+        # Should use explicit path, not auto-discovered one
+        assert client.db_path == explicit_path
+
+    def test_create_beads_client_no_beads_directory(self, tmp_path, monkeypatch):
+        """Test factory behavior when no .beads/ directory exists."""
+        # Change to directory with no .beads
+        monkeypatch.chdir(tmp_path)
+
+        # Create client without specifying db_path
+        client = create_beads_client()
+
+        # Should have None for db_path since no .beads found
+        assert client.db_path is None
 
 
 class TestBeadsClientInit:
@@ -563,11 +591,7 @@ class TestBeadsClientInit:
 
     def test_init_custom_values(self):
         """Test BeadsClient initialization with custom values."""
-        client = BeadsClient(
-            db_path="/path/.beads",
-            timeout=45,
-            sandbox=True
-        )
+        client = BeadsClient(db_path="/path/.beads", timeout=45, sandbox=True)
 
         assert client.db_path == "/path/.beads"
         assert client.timeout == 45
@@ -585,7 +609,7 @@ class TestBeadsClientEdgeCases:
             "status": "closed",
             "priority": 4,
             "assignee": "bot",
-            "labels": ["automated", "test"]
+            "labels": ["automated", "test"],
         }
         mock_run.return_value = [updated_issue]
 
@@ -595,7 +619,7 @@ class TestBeadsClientEdgeCases:
             status=IssueStatus.CLOSED,
             priority=4,
             assignee="bot",
-            labels=["automated", "test"]
+            labels=["automated", "test"],
         )
 
         assert issue.status == IssueStatus.CLOSED
@@ -617,9 +641,7 @@ class TestBeadsClientEdgeCases:
 
         client = BeadsClient()
         issue = client.create_issue(
-            title="No Description",
-            description="",
-            issue_type=IssueType.TASK
+            title="No Description", description="", issue_type=IssueType.TASK
         )
 
         assert isinstance(issue, Issue)
@@ -634,7 +656,7 @@ class TestBeadsClientEdgeCases:
             **SAMPLE_ISSUE_JSON,
             "priority": 1,
             "assignee": "developer",
-            "labels": ["v2", "backend"]
+            "labels": ["v2", "backend"],
         }
         mock_run.return_value = [full_issue]
 
@@ -645,7 +667,7 @@ class TestBeadsClientEdgeCases:
             issue_type=IssueType.FEATURE,
             priority=1,
             assignee="developer",
-            labels=["v2", "backend"]
+            labels=["v2", "backend"],
         )
 
         assert issue.priority == 1
@@ -655,10 +677,7 @@ class TestBeadsClientEdgeCases:
     @patch("beads.client._run_bd_command")
     def test_update_issue_with_empty_label_list(self, mock_run):
         """Test updating issue with empty labels list."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "labels": []
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "labels": []}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -676,10 +695,7 @@ class TestBeadsClientUpdateIssueStatus:
     @patch("beads.client._run_bd_command")
     def test_update_issue_status_to_in_progress(self, mock_run):
         """Test updating issue status to in_progress."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "in_progress"
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "status": "in_progress"}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -699,10 +715,7 @@ class TestBeadsClientUpdateIssueStatus:
     @patch("beads.client._run_bd_command")
     def test_update_issue_status_to_closed(self, mock_run):
         """Test updating issue status to closed."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "closed"
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "status": "closed"}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -713,10 +726,7 @@ class TestBeadsClientUpdateIssueStatus:
     @patch("beads.client._run_bd_command")
     def test_update_issue_status_to_blocked(self, mock_run):
         """Test updating issue status to blocked."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "blocked"
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "status": "blocked"}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -727,10 +737,7 @@ class TestBeadsClientUpdateIssueStatus:
     @patch("beads.client._run_bd_command")
     def test_update_issue_status_to_open(self, mock_run):
         """Test updating issue status to open."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "open"
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "status": "open"}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -753,7 +760,7 @@ class TestBeadsClientUpdateIssueStatus:
             message="Issue not found",
             command=["bd", "--json", "update", "nonexistent", "--status", "in_progress"],
             returncode=1,
-            stderr="Issue 'nonexistent' not found"
+            stderr="Issue 'nonexistent' not found",
         )
 
         client = BeadsClient()
@@ -769,10 +776,7 @@ class TestBeadsClientUpdateIssuePriority:
     @patch("beads.client._run_bd_command")
     def test_update_issue_priority_to_zero(self, mock_run):
         """Test updating issue priority to 0 (critical)."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "priority": 0
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "priority": 0}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -792,10 +796,7 @@ class TestBeadsClientUpdateIssuePriority:
     @patch("beads.client._run_bd_command")
     def test_update_issue_priority_to_four(self, mock_run):
         """Test updating issue priority to 4 (backlog)."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "priority": 4
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "priority": 4}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -806,10 +807,7 @@ class TestBeadsClientUpdateIssuePriority:
     @patch("beads.client._run_bd_command")
     def test_update_issue_priority_to_two(self, mock_run):
         """Test updating issue priority to 2 (medium)."""
-        updated_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "priority": 2
-        }
+        updated_issue = {**SAMPLE_ISSUE_JSON, "priority": 2}
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
@@ -848,7 +846,7 @@ class TestBeadsClientUpdateIssuePriority:
             message="Issue not found",
             command=["bd", "--json", "update", "nonexistent", "--priority", "2"],
             returncode=1,
-            stderr="Issue 'nonexistent' not found"
+            stderr="Issue 'nonexistent' not found",
         )
 
         client = BeadsClient()
@@ -864,10 +862,7 @@ class TestBeadsClientCloseIssue:
     @patch("beads.client._run_bd_command")
     def test_close_issue_respects_timeout(self, mock_run):
         """Test that custom timeout is passed to _run_bd_command."""
-        closed_issue = {
-            **SAMPLE_ISSUE_JSON,
-            "status": "closed"
-        }
+        closed_issue = {**SAMPLE_ISSUE_JSON, "status": "closed"}
         mock_run.return_value = [closed_issue]
 
         client = BeadsClient(timeout=60)
@@ -966,11 +961,7 @@ class TestBeadsClientListIssues:
 
         client = BeadsClient()
         client.list_issues(
-            status=IssueStatus.OPEN,
-            priority=0,
-            issue_type=IssueType.BUG,
-            limit=5,
-            assignee="bob"
+            status=IssueStatus.OPEN, priority=0, issue_type=IssueType.BUG, limit=5, assignee="bob"
         )
 
         args = mock_run.call_args[0][0]
@@ -1000,17 +991,12 @@ class TestBeadsClientListIssues:
     def test_list_issues_multiple_issues(self, mock_run):
         """Test list_issues with multiple issues returned."""
         issue_1 = SAMPLE_ISSUE_JSON.copy()
-        issue_2 = {
-            **SAMPLE_ISSUE_JSON,
-            "id": "test-def456",
-            "title": "Second Issue",
-            "priority": 2
-        }
+        issue_2 = {**SAMPLE_ISSUE_JSON, "id": "test-def456", "title": "Second Issue", "priority": 2}
         issue_3 = {
             **SAMPLE_ISSUE_JSON,
             "id": "test-ghi789",
             "title": "Third Issue",
-            "status": "closed"
+            "status": "closed",
         }
         mock_run.return_value = [issue_1, issue_2, issue_3]
 
@@ -1051,7 +1037,7 @@ class TestBeadsClientListIssues:
             message="Command failed",
             command=["bd", "--json", "list"],
             returncode=1,
-            stderr="Database error"
+            stderr="Database error",
         )
 
         client = BeadsClient()

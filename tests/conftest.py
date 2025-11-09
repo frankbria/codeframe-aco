@@ -1,9 +1,10 @@
 """Shared test fixtures and configuration for Vector Memory and Beads tests."""
 
 import subprocess
-import pytest
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
+
+import pytest
 
 # =============================================================================
 # Vector Memory Test Fixtures
@@ -73,16 +74,19 @@ def mock_issue_batch():
     Returns:
         Function that takes (start, end) and returns list of issue IDs
     """
+
     def _get_batch(start: int, end: int) -> list[str]:
         if not (0 <= start < end <= len(MOCK_BEADS_IDS)):
             raise ValueError(f"Invalid range [{start}, {end})")
         return MOCK_BEADS_IDS[start:end]
+
     return _get_batch
 
 
 # =============================================================================
 # Beads Integration Test Fixtures
 # =============================================================================
+
 
 # T029: Fixture for isolated .beads/ database
 @pytest.fixture
@@ -108,18 +112,18 @@ def test_beads_db(tmp_path: Path) -> Generator[Path, None, None]:
     """
     # Initialize Beads in the temporary directory
     result = subprocess.run(
-        ['bd', 'init', '--prefix', 'test'],
+        ["bd", "init", "--prefix", "test"],
         cwd=tmp_path,
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
 
     if result.returncode != 0:
         pytest.skip(f"bd init failed: {result.stderr}")
 
     # Verify .beads/ directory was created
-    beads_dir = tmp_path / '.beads'
+    beads_dir = tmp_path / ".beads"
     if not beads_dir.exists():
         pytest.skip(".beads/ directory was not created by bd init")
 
@@ -152,9 +156,9 @@ def beads_client(test_beads_db: Path):
 
     # Create client pointing to test database
     client = create_beads_client(
-        db_path=str(test_beads_db / '.beads'),
+        db_path=str(test_beads_db / ".beads"),
         timeout=10,  # Shorter timeout for tests
-        sandbox=True  # Disable daemon and Git sync for tests
+        sandbox=True,  # Disable daemon and Git sync for tests
     )
 
     return client
@@ -183,50 +187,50 @@ def test_issues(test_beads_db: Path) -> dict:
 
     # Issue 1: Open, P0, bug (high priority ready issue)
     result = subprocess.run(
-        ['bd', 'create', 'Test bug - high priority', '--type', 'bug', '--priority', '0'],
+        ["bd", "create", "Test bug - high priority", "--type", "bug", "--priority", "0"],
         cwd=test_beads_db,
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
     if result.returncode == 0:
         # Extract issue ID from output (format: "Created issue: test-abc")
         output = result.stdout.strip()
         if "Created issue:" in output:
             issue_id = output.split("Created issue:")[-1].strip()
-            issues['open_p0_bug'] = issue_id
+            issues["open_p0_bug"] = issue_id
 
     # Issue 2: Open, P2, feature (medium priority ready issue)
     result = subprocess.run(
-        ['bd', 'create', 'Test feature - medium priority', '--type', 'feature', '--priority', '2'],
+        ["bd", "create", "Test feature - medium priority", "--type", "feature", "--priority", "2"],
         cwd=test_beads_db,
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
     if result.returncode == 0:
         output = result.stdout.strip()
         if "Created issue:" in output:
             issue_id = output.split("Created issue:")[-1].strip()
-            issues['open_p2_feature'] = issue_id
+            issues["open_p2_feature"] = issue_id
 
     # Issue 3: Open, P3, task (low priority ready issue)
     result = subprocess.run(
-        ['bd', 'create', 'Test task - low priority', '--type', 'task', '--priority', '3'],
+        ["bd", "create", "Test task - low priority", "--type", "task", "--priority", "3"],
         cwd=test_beads_db,
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
     if result.returncode == 0:
         output = result.stdout.strip()
         if "Created issue:" in output:
             # Parse issue ID more carefully (just the ID, not the whole output)
-            lines = output.split('\n')
+            lines = output.split("\n")
             for line in lines:
                 if "Created issue:" in line:
                     issue_id = line.split("Created issue:")[-1].strip().split()[0]
-                    issues['open_p3_task'] = issue_id
+                    issues["open_p3_task"] = issue_id
                     break
 
     return issues

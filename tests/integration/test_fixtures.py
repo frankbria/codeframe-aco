@@ -4,7 +4,6 @@ This module tests that the pytest fixtures defined in conftest.py
 work as expected with real Beads CLI commands.
 """
 
-import pytest
 from pathlib import Path
 
 
@@ -18,7 +17,7 @@ class TestFixtures:
         assert test_beads_db.exists()
         assert test_beads_db.is_dir()
 
-        beads_dir = test_beads_db / '.beads'
+        beads_dir = test_beads_db / ".beads"
         assert beads_dir.exists()
         assert beads_dir.is_dir()
 
@@ -29,11 +28,11 @@ class TestFixtures:
         import subprocess
 
         result = subprocess.run(
-            ['bd', 'create', 'Isolation test issue'],
+            ["bd", "create", "Isolation test issue"],
             cwd=test_beads_db,
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode == 0
@@ -63,17 +62,14 @@ class TestFixtures:
 
         # test_issues should have created issues in test_beads_db
         result = subprocess.run(
-            ['bd', '--json', 'list'],
-            cwd=test_beads_db,
-            capture_output=True,
-            text=True,
-            check=False
+            ["bd", "--json", "list"], cwd=test_beads_db, capture_output=True, text=True, check=False
         )
 
         assert result.returncode == 0
 
         # Should have JSON output
         import json
+
         issues = json.loads(result.stdout)
 
         # Should have at least some issues created by test_issues fixture
@@ -83,8 +79,8 @@ class TestFixtures:
     def test_fixture_cleanup(self, test_beads_db):
         """Test that fixture cleanup doesn't interfere with tests."""
         # Create a file in the test directory
-        test_file = test_beads_db / 'test.txt'
-        test_file.write_text('test content')
+        test_file = test_beads_db / "test.txt"
+        test_file.write_text("test content")
 
         assert test_file.exists()
 

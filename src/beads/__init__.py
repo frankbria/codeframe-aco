@@ -11,8 +11,8 @@ This package provides:
 - JSON parsing of bd command outputs
 """
 
-from beads.models import Issue, IssueStatus, IssueType, DependencyType, Dependency, DependencyTree
 from beads.client import BeadsClient, create_beads_client
+from beads.models import Dependency, DependencyTree, DependencyType, Issue, IssueStatus, IssueType
 
 __version__ = "0.1.0"
 

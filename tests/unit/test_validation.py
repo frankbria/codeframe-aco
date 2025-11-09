@@ -1,9 +1,6 @@
 """Unit tests for MemoryIndex with concurrency scenarios."""
 
 import threading
-from pathlib import Path
-
-import pytest
 
 from vector_memory.coordinate import VectorCoordinate
 from vector_memory.validation import MemoryIndex
@@ -174,14 +171,14 @@ class TestMemoryIndexConcurrency:
         # Pre-populate with some coordinates
         for i in range(0, 50):
             coord = VectorCoordinate(x=mock_issue_id(i), y=2, z=2)
-            metadata = {"timestamp": f"2025-01-06T12:00:00Z", "agent_id": "setup"}
+            metadata = {"timestamp": "2025-01-06T12:00:00Z", "agent_id": "setup"}
             index.add(coord, metadata)
 
         def add_coordinates(start_idx: int, count: int):
             try:
                 for i in range(count):
                     coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=3, z=1)
-                    metadata = {"timestamp": f"2025-01-06T13:00:00Z", "agent_id": "adder"}
+                    metadata = {"timestamp": "2025-01-06T13:00:00Z", "agent_id": "adder"}
                     index.add(coord, metadata)
             except Exception as e:
                 errors.append(e)
@@ -221,7 +218,7 @@ class TestMemoryIndexConcurrency:
             try:
                 for i in range(count):
                     coord = VectorCoordinate(x=mock_issue_id(start_idx + i), y=2, z=3)
-                    metadata = {"timestamp": f"2025-01-06T12:00:00Z", "agent_id": f"agent-{word}"}
+                    metadata = {"timestamp": "2025-01-06T12:00:00Z", "agent_id": f"agent-{word}"}
                     content = f"This is a test with {word} keyword"
                     index.add(coord, metadata, content=content)
             except Exception as e:
@@ -267,7 +264,9 @@ class TestMemoryIndexConcurrency:
         def query_before_point(issue_id: str, y_thresh: int, iterations: int):
             try:
                 for _ in range(iterations):
-                    results = index.query_partial_order(issue_id, y_thresh, dag_order=mock_dag_order)
+                    results = index.query_partial_order(
+                        issue_id, y_thresh, dag_order=mock_dag_order
+                    )
                     query_counts.append(len(results))
             except Exception as e:
                 errors.append(e)

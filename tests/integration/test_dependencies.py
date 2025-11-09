@@ -1,11 +1,12 @@
 """Integration tests for dependency management operations."""
 
-import pytest
 import subprocess
 
+import pytest
+
 from beads.client import BeadsClient
-from beads.models import IssueType, DependencyType
 from beads.exceptions import BeadsDependencyCycleError
+from beads.models import DependencyType
 
 
 @pytest.fixture
@@ -15,21 +16,21 @@ def beads_client_with_dependencies(test_beads_db, monkeypatch):
 
     # Create test issues via bd CLI
     subprocess.run(
-        ['bd', 'create', 'Issue A', '--type', 'task', '--priority', '2'],
+        ["bd", "create", "Issue A", "--type", "task", "--priority", "2"],
         capture_output=True,
-        check=True
+        check=True,
     )
 
     subprocess.run(
-        ['bd', 'create', 'Issue B', '--type', 'task', '--priority', '2'],
+        ["bd", "create", "Issue B", "--type", "task", "--priority", "2"],
         capture_output=True,
-        check=True
+        check=True,
     )
 
     subprocess.run(
-        ['bd', 'create', 'Issue C', '--type', 'task', '--priority', '2'],
+        ["bd", "create", "Issue C", "--type", "task", "--priority", "2"],
         capture_output=True,
-        check=True
+        check=True,
     )
 
     client = BeadsClient(sandbox=True)
@@ -53,9 +54,7 @@ class TestAddDependency:
 
         # Add dependency: issue_a blocks issue_b
         dep = client.add_dependency(
-            blocked_id=issue_a.id,
-            blocker_id=issue_b.id,
-            dep_type=DependencyType.BLOCKS
+            blocked_id=issue_a.id, blocker_id=issue_b.id, dep_type=DependencyType.BLOCKS
         )
 
         assert dep.blocked_id == issue_a.id
@@ -78,9 +77,7 @@ class TestAddDependency:
 
         with pytest.raises(ValueError, match="Issue cannot depend on itself"):
             client.add_dependency(
-                blocked_id=issue_id,
-                blocker_id=issue_id,
-                dep_type=DependencyType.BLOCKS
+                blocked_id=issue_id, blocker_id=issue_id, dep_type=DependencyType.BLOCKS
             )
 
     def test_add_all_dependency_types(self, beads_client_with_dependencies):
@@ -99,7 +96,7 @@ class TestAddDependency:
             dep = client.add_dependency(
                 blocked_id=ready_issues[0].id,
                 blocker_id=ready_issues[idx + 1].id,
-                dep_type=dep_type
+                dep_type=dep_type,
             )
             assert dep.dependency_type == dep_type
 
@@ -119,9 +116,7 @@ class TestRemoveDependency:
 
         # Add dependency
         client.add_dependency(
-            blocked_id=issue_a.id,
-            blocker_id=issue_b.id,
-            dep_type=DependencyType.BLOCKS
+            blocked_id=issue_a.id, blocker_id=issue_b.id, dep_type=DependencyType.BLOCKS
         )
 
         # Verify issue_a is blocked
@@ -162,9 +157,7 @@ class TestGetDependencyTree:
 
         # Add dependency: issue_a is blocked by issue_b
         client.add_dependency(
-            blocked_id=issue_a.id,
-            blocker_id=issue_b.id,
-            dep_type=DependencyType.BLOCKS
+            blocked_id=issue_a.id, blocker_id=issue_b.id, dep_type=DependencyType.BLOCKS
         )
 
         # Query tree for issue_a
@@ -211,16 +204,12 @@ class TestDetectDependencyCycles:
 
         # Add dependency: A depends on B
         client.add_dependency(
-            blocked_id=issue_a.id,
-            blocker_id=issue_b.id,
-            dep_type=DependencyType.BLOCKS
+            blocked_id=issue_a.id, blocker_id=issue_b.id, dep_type=DependencyType.BLOCKS
         )
 
         # Try to add reverse dependency: B depends on A (creates cycle)
         # bd should prevent this
         with pytest.raises((BeadsDependencyCycleError, Exception)):
             client.add_dependency(
-                blocked_id=issue_b.id,
-                blocker_id=issue_a.id,
-                dep_type=DependencyType.BLOCKS
+                blocked_id=issue_b.id, blocker_id=issue_a.id, dep_type=DependencyType.BLOCKS
             )
