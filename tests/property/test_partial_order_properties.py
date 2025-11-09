@@ -38,7 +38,9 @@ class TestPartialOrderProperties:
         dag_order = {x1_id: x1, x2_id: x2, x3_id: x3}
 
         # Transitivity: if a < b and b < c, then a < c
-        if PartialOrder.less_than(coord1, coord2, dag_order) and PartialOrder.less_than(coord2, coord3, dag_order):
+        if PartialOrder.less_than(coord1, coord2, dag_order) and PartialOrder.less_than(
+            coord2, coord3, dag_order
+        ):
             assert PartialOrder.less_than(coord1, coord3, dag_order) is True
 
     @given(
@@ -55,7 +57,9 @@ class TestPartialOrderProperties:
         dag_order = {x1_id: x1, x2_id: x2}
 
         # Antisymmetry: if a <= b and b <= a, then a == b
-        if PartialOrder.less_equal(coord1, coord2, dag_order) and PartialOrder.less_equal(coord2, coord1, dag_order):
+        if PartialOrder.less_equal(coord1, coord2, dag_order) and PartialOrder.less_equal(
+            coord2, coord1, dag_order
+        ):
             assert coord1 == coord2
 
     @given(
@@ -144,7 +148,9 @@ class TestPartialOrderProperties:
         dag_order = {x1_id: x1, x2_id: x2}
 
         # Symmetric property
-        assert PartialOrder.comparable(coord1, coord2, dag_order) == PartialOrder.comparable(coord2, coord1, dag_order)
+        assert PartialOrder.comparable(coord1, coord2, dag_order) == PartialOrder.comparable(
+            coord2, coord1, dag_order
+        )
 
     # TODO: Uncomment when find_before() is implemented
     # @given(

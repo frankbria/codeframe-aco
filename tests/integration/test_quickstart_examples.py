@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from vector_memory import VectorMemoryManager, VectorCoordinate
+from vector_memory import VectorCoordinate, VectorMemoryManager
 from vector_memory.exceptions import ImmutableLayerError
 
 
@@ -123,7 +123,9 @@ class TestQuickstartExamples:
             )
 
         # Query all architecture decisions
-        arch_decisions = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1))
+        arch_decisions = manager.query_range(
+            x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1)
+        )
 
         assert len(arch_decisions) == 20
         for decision in arch_decisions:
@@ -291,7 +293,7 @@ class TestQuickstartExamples:
             4: ("Ephemeral", "Temporary note", True),  # Mutable
         }
 
-        for z, (name, content, is_mutable) in layers.items():
+        for z, (_name, content, is_mutable) in layers.items():
             coord = VectorCoordinate(x=mock_issue_id(1), y=2, z=z)
             manager.store(coord, content)
 

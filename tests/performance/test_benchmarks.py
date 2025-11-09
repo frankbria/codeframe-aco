@@ -16,7 +16,7 @@ from statistics import quantiles
 
 import pytest
 
-from vector_memory import VectorMemoryManager, VectorCoordinate
+from vector_memory import VectorCoordinate, VectorMemoryManager
 
 
 class TestPerformanceBenchmarks:
@@ -70,7 +70,7 @@ class TestPerformanceBenchmarks:
         p50 = quantiles(store_times, n=100)[49]  # 50th percentile
         p99 = quantiles(store_times, n=100)[98]  # 99th percentile
 
-        print(f"\nStore Performance:")
+        print("\nStore Performance:")
         print(f"  50th percentile: {p50:.2f}ms")
         print(f"  99th percentile: {p99:.2f}ms")
         print(f"  Max: {max(store_times):.2f}ms")
@@ -110,7 +110,7 @@ class TestPerformanceBenchmarks:
         p50 = quantiles(retrieve_times, n=100)[49]
         p99 = quantiles(retrieve_times, n=100)[98]
 
-        print(f"\nRetrieve Performance:")
+        print("\nRetrieve Performance:")
         print(f"  50th percentile: {p50:.2f}ms")
         print(f"  99th percentile: {p99:.2f}ms")
         print(f"  Max: {max(retrieve_times):.2f}ms")
@@ -125,7 +125,7 @@ class TestPerformanceBenchmarks:
         """
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="benchmark")
 
-        print(f"\nStoring 10,000 decisions...")
+        print("\nStoring 10,000 decisions...")
         start = time.perf_counter()
 
         # Store 10,000 decisions (using x=0-999, y=1-5, z=2-3 combinations)
@@ -183,7 +183,7 @@ class TestPerformanceBenchmarks:
         end = time.perf_counter()
 
         sync_time = end - start
-        print(f"\nGit Sync Performance:")
+        print("\nGit Sync Performance:")
         print(f"  1000 decisions synced in {sync_time:.2f}s")
 
         # Assert success criteria
@@ -211,7 +211,7 @@ class TestPerformanceBenchmarks:
         end = time.perf_counter()
 
         recovery_time = end - start
-        print(f"\nRecovery Performance:")
+        print("\nRecovery Performance:")
         print(f"  Loaded 1000 decisions in {recovery_time:.2f}s")
 
         # Verify data integrity
@@ -250,14 +250,18 @@ class TestPerformanceBenchmarks:
         avg_time = sum(query_times) / len(query_times)
         max_time = max(query_times)
 
-        print(f"\nPartial Order Query Performance:")
+        print("\nPartial Order Query Performance:")
         print(f"  Average: {avg_time:.2f}ms")
         print(f"  Max: {max_time:.2f}ms")
         print(f"  Results per query: {len(results)}")
 
         # Assert success criteria
-        assert avg_time < 100, f"Average partial order query time ({avg_time:.2f}ms) exceeds 100ms threshold"
-        assert max_time < 100, f"Max partial order query time ({max_time:.2f}ms) exceeds 100ms threshold"
+        assert (
+            avg_time < 100
+        ), f"Average partial order query time ({avg_time:.2f}ms) exceeds 100ms threshold"
+        assert (
+            max_time < 100
+        ), f"Max partial order query time ({max_time:.2f}ms) exceeds 100ms threshold"
 
     def test_content_search_performance(self, temp_repo, mock_issue_id):
         """
@@ -289,12 +293,14 @@ class TestPerformanceBenchmarks:
         avg_time = sum(search_times) / len(search_times)
         max_time = max(search_times)
 
-        print(f"\nContent Search Performance:")
+        print("\nContent Search Performance:")
         print(f"  Average: {avg_time:.2f}ms")
         print(f"  Max: {max_time:.2f}ms")
 
         # Assert success criteria
-        assert avg_time < 200, f"Average content search time ({avg_time:.2f}ms) exceeds 200ms threshold"
+        assert (
+            avg_time < 200
+        ), f"Average content search time ({avg_time:.2f}ms) exceeds 200ms threshold"
         assert max_time < 200, f"Max content search time ({max_time:.2f}ms) exceeds 200ms threshold"
 
     def test_range_query_performance(self, temp_repo, mock_issue_id):
@@ -318,7 +324,7 @@ class TestPerformanceBenchmarks:
             ("Large", (mock_issue_id(1), mock_issue_id(200))),
         ]
 
-        print(f"\nRange Query Performance:")
+        print("\nRange Query Performance:")
         for name, x_range in test_cases:
             start = time.perf_counter()
             results = manager.query_range(x_range=x_range)

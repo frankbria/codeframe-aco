@@ -79,22 +79,32 @@ class TestCoordinateProperties:
         assert f"y-{y}" in path_str
         assert f"z-{z}" in path_str
 
-    @given(x=st.one_of(
-        # Missing hyphen separator
-        st.text(min_size=1, max_size=20, alphabet=st.characters(blacklist_characters='-')),
-        # Wrong suffix length (not exactly 3 chars)
-        st.builds(lambda p, s: f"{p}-{s}",
-                  st.text(min_size=1, max_size=10),
-                  st.text(min_size=1, max_size=10).filter(lambda s: len(s) != 3)),
-        # Uppercase letters in suffix (should be lowercase)
-        st.builds(lambda p, s: f"{p}-{s}",
-                  st.text(min_size=1, max_size=10),
-                  st.text(min_size=3, max_size=3, alphabet=st.characters(whitelist_categories=('Lu',)))),
-        # Non-alphanumeric characters in suffix
-        st.builds(lambda p, s: f"{p}-{s}",
-                  st.text(min_size=1, max_size=10),
-                  st.text(min_size=3, max_size=3, alphabet='!@#$%^&')),
-    ))
+    @given(
+        x=st.one_of(
+            # Missing hyphen separator
+            st.text(min_size=1, max_size=20, alphabet=st.characters(blacklist_characters="-")),
+            # Wrong suffix length (not exactly 3 chars)
+            st.builds(
+                lambda p, s: f"{p}-{s}",
+                st.text(min_size=1, max_size=10),
+                st.text(min_size=1, max_size=10).filter(lambda s: len(s) != 3),
+            ),
+            # Uppercase letters in suffix (should be lowercase)
+            st.builds(
+                lambda p, s: f"{p}-{s}",
+                st.text(min_size=1, max_size=10),
+                st.text(
+                    min_size=3, max_size=3, alphabet=st.characters(whitelist_categories=("Lu",))
+                ),
+            ),
+            # Non-alphanumeric characters in suffix
+            st.builds(
+                lambda p, s: f"{p}-{s}",
+                st.text(min_size=1, max_size=10),
+                st.text(min_size=3, max_size=3, alphabet="!@#$%^&"),
+            ),
+        )
+    )
     def test_invalid_x_malformed_beads_id(self, x):
         """Test that malformed Beads IDs are rejected."""
         try:
@@ -104,14 +114,16 @@ class TestCoordinateProperties:
         except CoordinateValidationError:
             pass  # Expected
 
-    @given(x=st.one_of(
-        # Integer instead of string
-        st.integers(),
-        # Empty string
-        st.just(""),
-        # Only prefix, no hyphen or suffix
-        st.text(min_size=1, max_size=10, alphabet=st.characters(blacklist_characters='-')),
-    ))
+    @given(
+        x=st.one_of(
+            # Integer instead of string
+            st.integers(),
+            # Empty string
+            st.just(""),
+            # Only prefix, no hyphen or suffix
+            st.text(min_size=1, max_size=10, alphabet=st.characters(blacklist_characters="-")),
+        )
+    )
     def test_invalid_x_wrong_type_or_format(self, x):
         """Test that non-string or wrong format x values are rejected."""
         try:
@@ -124,6 +136,7 @@ class TestCoordinateProperties:
     def test_invalid_y_values(self, y):
         """Test that y values outside {1,2,3,4,5} are rejected."""
         from tests.conftest import mock_issue_id_factory
+
         try:
             VectorCoordinate(x=mock_issue_id_factory(1), y=y, z=1)
             raise AssertionError(f"Expected CoordinateValidationError for y={y}")
@@ -134,6 +147,7 @@ class TestCoordinateProperties:
     def test_invalid_z_values(self, z):
         """Test that z values outside {1,2,3,4} are rejected."""
         from tests.conftest import mock_issue_id_factory
+
         try:
             VectorCoordinate(x=mock_issue_id_factory(1), y=1, z=z)
             raise AssertionError(f"Expected CoordinateValidationError for z={z}")

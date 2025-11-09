@@ -23,12 +23,38 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual Environments
+# Virtual Environment
 .venv/
 venv/
 ENV/
 env/
-.virtualenv/
+.virtualenv
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.pyre/
+
+# Jupyter Notebook
+.ipynb_checkpoints
 
 # IDEs
 .vscode/
@@ -39,33 +65,8 @@ env/
 .project
 .pydevproject
 .settings/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-coverage.xml
-*.cover
-.hypothesis/
-
-# Type Checking
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Environment Variables
-.env
-.env.*
-!.env.example
-
-# Vector Memory (lock files only - data committed)
-.vector-memory/*.lock
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
@@ -76,13 +77,30 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
+# Project specific
+*.tmp
+*.bak
+*.orig
+.env
+.env.local
+.env.*
+.env.*.local
+!.env.example
+
 # Logs
 *.log
 logs/
 
 # Temporary files
-*.tmp
-*.bak
-*.swp
 temp/
 tmp/
+
+# Documentation
+docs/_build/
+site/
+
+# Vector Memory (lock files only - data committed)
+.vector-memory/*.lock
+
+# Beads (should NOT be ignored - we want to track .beads/)
+# .beads/ is intentionally tracked for Git sync

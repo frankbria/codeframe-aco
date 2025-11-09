@@ -99,6 +99,61 @@ All work tracked as issues in Beads with explicit dependencies:
    /speckit.implement  # Execute implementation
    ```
 
+## Beads Integration Layer (Python API)
+
+The project includes a Python interface for programmatic interaction with the Beads issue tracker.
+
+### Installation
+
+```bash
+pip install -e .
+```
+
+### Basic Usage
+
+```python
+from beads import create_beads_client, IssueType, IssueStatus, DependencyType
+
+# Create client (auto-discovers .beads/ directory)
+client = create_beads_client()
+
+# Query ready issues
+ready_issues = client.get_ready_issues(limit=5)
+for issue in ready_issues:
+    print(f"{issue.id}: {issue.title} (P{issue.priority})")
+
+# Get specific issue
+issue = client.get_issue("codeframe-aco-xon")
+print(f"Status: {issue.status}, Type: {issue.issue_type}")
+
+# Create new issue
+new_issue = client.create_issue(
+    title="Implement caching layer",
+    issue_type=IssueType.FEATURE,
+    priority=2,
+    description="Add Redis caching for performance"
+)
+
+# Update issue status
+client.update_issue_status(new_issue.id, IssueStatus.IN_PROGRESS)
+
+# Manage dependencies
+client.add_dependency(
+    blocked_id="issue-a",
+    blocker_id="issue-b",
+    dep_type=DependencyType.BLOCKS
+)
+
+# Query dependency tree
+tree = client.get_dependency_tree("issue-a")
+print(f"Blockers: {tree.blockers}")
+
+# Close issue when done
+client.close_issue(new_issue.id)
+```
+
+See [examples/](examples/) directory for complete working examples.
+
 ## Core Principles
 
 This project operates under seven constitutional principles:

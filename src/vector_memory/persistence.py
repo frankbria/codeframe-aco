@@ -1,7 +1,7 @@
 """Git persistence operations for vector memory."""
 
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -48,7 +48,7 @@ class GitPersistence:
         """
         # Generate default message if none provided
         if message is None:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             message = f"vector-memory: sync {decision_count} decision(s) at {timestamp}"
 
         # Get HEAD commit hash before attempting commit
@@ -72,7 +72,7 @@ class GitPersistence:
                 capture_output=True,
                 text=True,
             )
-            
+
             # Verify commit was actually created
             try:
                 head_after = subprocess.run(
@@ -82,7 +82,7 @@ class GitPersistence:
                     capture_output=True,
                     text=True,
                 ).stdout.strip()
-                
+
                 if head_before is not None and head_after == head_before:
                     raise RuntimeError(
                         "git commit succeeded but HEAD did not change - commit may have failed silently"
@@ -91,9 +91,9 @@ class GitPersistence:
                 raise RuntimeError(
                     f"Failed to verify commit was created: {verify_error}"
                 ) from verify_error
-            
+
             return True
-            
+
         except subprocess.CalledProcessError as e:
             # Check if it's just "nothing to commit"
             if "nothing to commit" in e.stdout or "nothing to commit" in e.stderr:

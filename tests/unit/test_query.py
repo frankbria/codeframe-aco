@@ -102,7 +102,9 @@ class TestQueryRange:
                     manager.store(coord, f"x={x},y={y},z={z}")
 
         # Query: x in [1,2], y in [2,3], z=1
-        results = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(2)), y_range=(2, 3), z_range=(1, 1))
+        results = manager.query_range(
+            x_range=(mock_issue_id(1), mock_issue_id(2)), y_range=(2, 3), z_range=(1, 1)
+        )
 
         # Should have: x∈{1,2} × y∈{2,3} × z∈{1} = 4 combinations
         assert len(results) == 4
@@ -197,9 +199,14 @@ class TestSearchContent:
         """Test searching for multiple terms (match all)."""
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="test-agent")
 
-        manager.store(VectorCoordinate(x=mock_issue_id(1), y=2, z=1), "Use PostgreSQL database for authentication")
+        manager.store(
+            VectorCoordinate(x=mock_issue_id(1), y=2, z=1),
+            "Use PostgreSQL database for authentication",
+        )
         manager.store(VectorCoordinate(x=mock_issue_id(2), y=2, z=1), "Use Redis for caching")
-        manager.store(VectorCoordinate(x=mock_issue_id(3), y=2, z=1), "Use authentication middleware")
+        manager.store(
+            VectorCoordinate(x=mock_issue_id(3), y=2, z=1), "Use authentication middleware"
+        )
 
         # Search for "authentication" AND "database"
         results = manager.search_content(["authentication", "database"], match_all=True)
@@ -337,7 +344,9 @@ class TestPartialOrderQueries:
             manager.store(VectorCoordinate(x=mock_issue_id(3), y=2, z=z), f"Layer {z}")
 
         # Query for architecture layer (z=1) only before (5, 1)
-        results = manager.query_partial_order(x_threshold=mock_issue_id(5), y_threshold=1, z_filter=1)
+        results = manager.query_partial_order(
+            x_threshold=mock_issue_id(5), y_threshold=1, z_filter=1
+        )
 
         # Should get (1,2,1) and (3,2,1) but not other layers
         assert len(results) == 2

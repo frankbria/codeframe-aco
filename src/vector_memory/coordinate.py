@@ -25,7 +25,7 @@ class VectorCoordinate:
     def __post_init__(self) -> None:
         """Validate coordinate values on construction."""
         # Validate Beads issue ID format: prefix-hash (e.g., "codeframe-aco-t49")
-        if not isinstance(self.x, str) or not re.match(r'^[\w-]+-[a-z0-9]{3}$', self.x):
+        if not isinstance(self.x, str) or not re.match(r"^[\w-]+-[a-z0-9]{3}$", self.x):
             raise CoordinateValidationError(
                 f"x must be a valid Beads issue ID (format: 'project-prefix-xxx'), got: {self.x}"
             )

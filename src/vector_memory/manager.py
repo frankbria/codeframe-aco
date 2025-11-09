@@ -1,23 +1,23 @@
 """VectorMemoryManager - Main API for the vector memory system."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from vector_memory.coordinate import VectorCoordinate
 from vector_memory.exceptions import (
     ConcurrencyError,
     CoordinateValidationError,
+    ImmutableLayerError,
     QueryError,
     StorageError,
-    ImmutableLayerError,
 )
 from vector_memory.persistence import GitPersistence
 from vector_memory.storage import MemoryLayer, StoredDecision
+from vector_memory.validation import MemoryIndex
 
 # Configure module logger
 logger = logging.getLogger(__name__)
-from vector_memory.validation import MemoryIndex
 
 
 class VectorMemoryManager:
@@ -109,7 +109,7 @@ class VectorMemoryManager:
         layer = MemoryLayer.get_layer(coord.z)
 
         # Create decision object
-        timestamp = datetime.now()
+        timestamp = datetime.now(UTC)
         decision = StoredDecision(
             coordinate=coord,
             content=content,
@@ -133,7 +133,7 @@ class VectorMemoryManager:
                 existing_decision = None
                 if file_path.exists():
                     existing_decision = StoredDecision.from_file(file_path)
-                
+
                 # Validate immutability rules based on actual on-disk state
                 layer.validate_write(coord, existing_decision)
 
@@ -164,12 +164,12 @@ class VectorMemoryManager:
             )
             return decision
 
-        except Timeout:
+        except Timeout as e:
             logger.error(f"Lock timeout storing decision at {coord.to_tuple()}")
             raise ConcurrencyError(
                 f"Lock timeout while storing decision at {coord.to_tuple()}. "
                 "Another process may be writing to this coordinate."
-            )
+            ) from e
         except ImmutableLayerError:
             # Re-raise immutability errors directly (don't wrap in StorageError)
             raise

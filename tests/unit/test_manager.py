@@ -211,7 +211,9 @@ class TestArchitectureLayerBehavior:
         for decision in arch_decisions:
             assert decision.coordinate.z == 1
 
-    def test_architecture_decisions_permanent_across_overwrites_attempt(self, temp_repo, mock_issue_id):
+    def test_architecture_decisions_permanent_across_overwrites_attempt(
+        self, temp_repo, mock_issue_id
+    ):
         """Test that architecture decisions remain permanent even after many overwrite attempts."""
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="test-agent")
 
@@ -221,11 +223,11 @@ class TestArchitectureLayerBehavior:
         manager.store(coord, original_content)
 
         # Try to overwrite 100 times
+        import contextlib
+
         for i in range(100):
-            try:
+            with contextlib.suppress(ImmutableLayerError):
                 manager.store(coord, f"Attempt {i}")
-            except ImmutableLayerError:
-                pass  # Expected
 
         # Original should still be there
         decision = manager.get(coord)

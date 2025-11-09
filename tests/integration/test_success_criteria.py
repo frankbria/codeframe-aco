@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from vector_memory import VectorMemoryManager, VectorCoordinate
+from vector_memory import VectorCoordinate, VectorMemoryManager
 from vector_memory.exceptions import ImmutableLayerError
 
 # CI environments can be slower - apply generous multiplier
@@ -44,7 +44,7 @@ class TestSuccessCriteria:
         """
         SC-001: Agents can store and retrieve decisions in under 50 milliseconds
         for 99% of operations.
-        
+
         Note: Thresholds are multiplied by CI_THRESHOLD_MULTIPLIER to account for
         slower CI runners. Spec threshold is 50ms; CI allows 150ms (3x).
         """
@@ -74,7 +74,7 @@ class TestSuccessCriteria:
         store_p99 = quantiles(store_times, n=100)[98]
         retrieve_p99 = quantiles(retrieve_times, n=100)[98]
 
-        print(f"\nSC-001 Results:")
+        print("\nSC-001 Results:")
         print(f"  Store 99th percentile: {store_p99:.2f}ms")
         print(f"  Retrieve 99th percentile: {retrieve_p99:.2f}ms")
         print(f"  Threshold multiplier: {CI_THRESHOLD_MULTIPLIER}x (CI={bool(os.getenv('CI'))})")
@@ -118,10 +118,10 @@ class TestSuccessCriteria:
                     if decision is not None:
                         false_positives += 1
 
-        print(f"\nSC-002 Results:")
+        print("\nSC-002 Results:")
         print(f"  False positives: {false_positives}")
         print(f"  False negatives: {false_negatives}")
-        print(f"  Accuracy: 100%")
+        print("  Accuracy: 100%")
 
         assert false_positives == 0, "False positives detected"
         assert false_negatives == 0, "False negatives detected"
@@ -152,10 +152,10 @@ class TestSuccessCriteria:
             except ImmutableLayerError:
                 pass  # Expected
 
-        print(f"\nSC-003 Results:")
+        print("\nSC-003 Results:")
         print(f"  Modification attempts: {modification_attempts}")
         print(f"  Successful modifications: {successful_modifications}")
-        print(f"  Immutability: 100%")
+        print("  Immutability: 100%")
 
         assert successful_modifications == 0, "Architecture layer was modified"
 
@@ -182,16 +182,18 @@ class TestSuccessCriteria:
 
         # Test query performance with 10k decisions
         start = time.perf_counter()
-        results = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(999)))
+        manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(999)))
         query_time = time.perf_counter() - start
 
-        print(f"\nSC-004 Results:")
+        print("\nSC-004 Results:")
         print(f"  Total decisions stored: {count}")
         print(f"  Query time with 10k decisions: {query_time:.2f}s")
 
         assert count == 10000, "Failed to store 10,000 decisions"
         threshold = 1.0 * CI_THRESHOLD_MULTIPLIER
-        assert query_time < threshold, f"Query time {query_time:.2f}s exceeds {threshold}s (degradation detected)"
+        assert (
+            query_time < threshold
+        ), f"Query time {query_time:.2f}s exceeds {threshold}s (degradation detected)"
 
     def test_sc005_git_sync_under_5_seconds(self, temp_repo, mock_issue_id):
         """
@@ -210,7 +212,7 @@ class TestSuccessCriteria:
         manager.sync(message="Sync 1000 decisions")
         sync_time = time.perf_counter() - start
 
-        print(f"\nSC-005 Results:")
+        print("\nSC-005 Results:")
         print(f"  Sync time for 1000 decisions: {sync_time:.2f}s")
 
         threshold = 5.0 * CI_THRESHOLD_MULTIPLIER
@@ -238,12 +240,14 @@ class TestSuccessCriteria:
         test_coord = VectorCoordinate(x=mock_issue_id(500), y=2, z=2)
         decision = manager2.get(test_coord)
 
-        print(f"\nSC-006 Results:")
+        print("\nSC-006 Results:")
         print(f"  Recovery time: {recovery_time:.2f}s")
         print(f"  Data integrity: {'OK' if decision else 'FAILED'}")
 
         threshold = 10.0 * CI_THRESHOLD_MULTIPLIER
-        assert recovery_time < threshold, f"Recovery took {recovery_time:.2f}s, exceeds {threshold}s"
+        assert (
+            recovery_time < threshold
+        ), f"Recovery took {recovery_time:.2f}s, exceeds {threshold}s"
         assert decision is not None, "Data integrity compromised"
 
     def test_sc007_partial_order_under_100ms(self, temp_repo, mock_issue_id):
@@ -264,7 +268,7 @@ class TestSuccessCriteria:
         results = manager.query_partial_order(x_threshold=mock_issue_id(50), y_threshold=3)
         query_time = (time.perf_counter() - start) * 1000
 
-        print(f"\nSC-007 Results:")
+        print("\nSC-007 Results:")
         print(f"  Query time: {query_time:.2f}ms")
         print(f"  Results returned: {len(results)}")
 
@@ -300,7 +304,7 @@ class TestSuccessCriteria:
         results = manager.search_content(["database"])
         search_time = (time.perf_counter() - start) * 1000
 
-        print(f"\nSC-008 Results:")
+        print("\nSC-008 Results:")
         print(f"  Search time: {search_time:.2f}ms")
         print(f"  Results found: {len(results)}")
 
@@ -341,11 +345,11 @@ class TestSuccessCriteria:
         manager = VectorMemoryManager(repo_path=temp_repo, agent_id="verifier")
         all_decisions = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(50)))
 
-        print(f"\nSC-009 Results:")
+        print("\nSC-009 Results:")
         print(f"  Errors during concurrent access: {len(errors)}")
-        print(f"  Expected decisions: 50")
+        print("  Expected decisions: 50")
         print(f"  Actual decisions: {len(all_decisions)}")
-        print(f"  Data consistency: 100%")
+        print("  Data consistency: 100%")
 
         assert len(errors) == 0, f"Errors occurred: {errors}"
         assert len(all_decisions) == 50, "Data loss detected"
@@ -365,30 +369,30 @@ class TestSuccessCriteria:
 
         # Simulate common context queries
         # 1. Get all architecture for current issue (1 lookup)
-        results1 = manager.query_range(x_range=(mock_issue_id(10), mock_issue_id(10)), z_range=(1, 1))
+        manager.query_range(x_range=(mock_issue_id(10), mock_issue_id(10)), z_range=(1, 1))
         lookups1 = 1
 
         # 2. Get architecture decisions for issues 1-20 (1 lookup)
-        results2 = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1))
+        manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1))
         lookups2 = 1
 
         # 3. Get all decisions before issue 30 (1 lookup)
-        results3 = manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=5)
+        manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=5)
         lookups3 = 1
 
         # 4. Search for specific content (1 lookup)
-        results4 = manager.search_content(["Decision"])
+        manager.search_content(["Decision"])
         lookups4 = 1
 
         # All common queries use ≤ 1 lookup due to efficient indexing
         all_lookups = [lookups1, lookups2, lookups3, lookups4]
         avg_lookups = sum(all_lookups) / len(all_lookups)
 
-        print(f"\nSC-010 Results:")
+        print("\nSC-010 Results:")
         print(f"  Average lookups per query: {avg_lookups:.1f}")
-        print(f"  All queries under 5 lookups: YES")
+        print("  All queries under 5 lookups: YES")
 
-        assert all(l <= 5 for l in all_lookups), "Some queries exceeded 5 lookups"
+        assert all(lookup <= 5 for lookup in all_lookups), "Some queries exceeded 5 lookups"
         assert avg_lookups < 5, f"Average lookups {avg_lookups} exceeds 5"
 
 
