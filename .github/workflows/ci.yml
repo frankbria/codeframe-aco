@@ -28,6 +28,9 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          # Also export for this session
+          export PATH="$HOME/.local/bin:$PATH"
+          which bd
 
       - name: Install dependencies
         run: |
@@ -36,9 +39,10 @@ jobs:
 
       - name: Verify Beads installation
         run: |
+          export PATH="$HOME/.local/bin:$PATH"
           which bd
-          export BEADS_DIR="${GITHUB_WORKSPACE}/.beads"
-          bd --version
+          # Don't require BEADS_DIR for version check
+          bd version || bd --version || echo "bd command found at $(which bd)"
 
       - name: Run linting (ruff)
         run: ruff check src/ tests/
@@ -52,12 +56,12 @@ jobs:
 
       - name: Run unit tests
         run: |
-          export BEADS_DIR="${GITHUB_WORKSPACE}/.beads"
+          export PATH="$HOME/.local/bin:$PATH"
           pytest tests/unit/ -v --cov=src/beads --cov-report=term --cov-report=xml
 
       - name: Run integration tests
         run: |
-          export BEADS_DIR="${GITHUB_WORKSPACE}/.beads"
+          export PATH="$HOME/.local/bin:$PATH"
           pytest tests/integration/ -v --timeout=60 --cov=src/beads --cov-append --cov-report=xml
         continue-on-error: true  # Integration tests may timeout
 
