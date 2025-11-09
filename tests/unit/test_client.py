@@ -646,7 +646,7 @@ class TestBeadsClientEdgeCases:
 
         assert isinstance(issue, Issue)
         # Description should not be passed in args if empty
-        args = mock_run.call_args[0][0]
+        mock_run.call_args[0][0]
         # Empty description should still work
 
     @patch("beads.client._run_bd_command")
@@ -681,10 +681,10 @@ class TestBeadsClientEdgeCases:
         mock_run.return_value = [updated_issue]
 
         client = BeadsClient()
-        issue = client.update_issue("test-abc123", labels=[])
+        client.update_issue("test-abc123", labels=[])
 
         # Should not add any --label flags for empty list
-        args = mock_run.call_args[0][0]
+        mock_run.call_args[0][0]
         # Labels parameter was provided but empty
 
 

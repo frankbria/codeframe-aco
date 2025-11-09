@@ -273,7 +273,7 @@ class TestMemoryIndexConcurrency:
 
         # Create multiple query threads
         threads = []
-        for i in range(4):
+        for _i in range(4):
             t = threading.Thread(target=query_before_point, args=(mock_issue_id(10), 3, 25))
             threads.append(t)
             t.start()

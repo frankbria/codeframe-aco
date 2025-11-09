@@ -293,7 +293,7 @@ class TestQuickstartExamples:
             4: ("Ephemeral", "Temporary note", True),  # Mutable
         }
 
-        for z, (name, content, is_mutable) in layers.items():
+        for z, (_name, content, is_mutable) in layers.items():
             coord = VectorCoordinate(x=mock_issue_id(1), y=2, z=z)
             manager.store(coord, content)
 

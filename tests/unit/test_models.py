@@ -1,6 +1,6 @@
 """Unit tests for data models (Issue, enums, dependencies)."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -168,8 +168,8 @@ class TestIssueDataclass:
             status=IssueStatus.OPEN,
             priority=1,
             issue_type=IssueType.FEATURE,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             content_hash="abc123",
             source_repo=".",
         )
@@ -194,8 +194,8 @@ class TestIssueDataclass:
             status=IssueStatus.OPEN,
             priority=1,
             issue_type=IssueType.FEATURE,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             content_hash="abc123",
             source_repo=".",
             assignee="user@example.com",
@@ -217,8 +217,8 @@ class TestIssueDataclass:
                 status=IssueStatus.OPEN,
                 priority=1,
                 issue_type=IssueType.FEATURE,
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
                 content_hash="abc123",
                 source_repo=".",
             )
@@ -235,8 +235,8 @@ class TestIssueDataclass:
                 status=IssueStatus.OPEN,
                 priority=1,
                 issue_type=IssueType.FEATURE,
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
                 content_hash="abc123",
                 source_repo=".",
             )
@@ -253,8 +253,8 @@ class TestIssueDataclass:
                 status=IssueStatus.OPEN,
                 priority=-1,
                 issue_type=IssueType.FEATURE,
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
                 content_hash="abc123",
                 source_repo=".",
             )
@@ -271,8 +271,8 @@ class TestIssueDataclass:
                 status=IssueStatus.OPEN,
                 priority=5,
                 issue_type=IssueType.FEATURE,
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
                 content_hash="abc123",
                 source_repo=".",
             )

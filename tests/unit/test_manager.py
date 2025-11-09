@@ -223,11 +223,11 @@ class TestArchitectureLayerBehavior:
         manager.store(coord, original_content)
 
         # Try to overwrite 100 times
+        import contextlib
+
         for i in range(100):
-            try:
+            with contextlib.suppress(ImmutableLayerError):
                 manager.store(coord, f"Attempt {i}")
-            except ImmutableLayerError:
-                pass  # Expected
 
         # Original should still be there
         decision = manager.get(coord)

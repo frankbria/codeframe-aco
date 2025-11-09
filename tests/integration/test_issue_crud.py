@@ -54,7 +54,6 @@ class TestIssueStatusUpdates:
         assert len(ready_issues) > 0
 
         issue_id = ready_issues[0].id
-        original_status = ready_issues[0].status
 
         # Update status to in_progress
         updated_issue = client.update_issue_status(issue_id, IssueStatus.IN_PROGRESS)
@@ -460,10 +459,7 @@ class TestIssueCreation:
         cli_result = json.loads(result.stdout)
 
         # bd show returns a list with one element
-        if isinstance(cli_result, list):
-            issue_data = cli_result[0]
-        else:
-            issue_data = cli_result
+        issue_data = cli_result[0] if isinstance(cli_result, list) else cli_result
 
         assert issue_data["id"] == new_issue.id
         assert issue_data["title"] == "CLI Verification Test"

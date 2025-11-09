@@ -2,7 +2,7 @@
 
 import json
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -18,7 +18,7 @@ class TestStoredDecisionSerialization:
     def test_to_json(self, mock_issue_id):
         """Test conversion to JSON dict."""
         coord = VectorCoordinate(x=mock_issue_id(5), y=2, z=1)
-        timestamp = datetime(2025, 1, 6, 15, 30, 0)
+        timestamp = datetime(2025, 1, 6, 15, 30, 0, tzinfo=UTC)
         decision = StoredDecision(
             coordinate=coord,
             content="Use PostgreSQL",
@@ -56,7 +56,7 @@ class TestStoredDecisionSerialization:
     def test_json_roundtrip(self, mock_issue_id):
         """Test JSON serialization roundtrip."""
         coord = VectorCoordinate(x=mock_issue_id(42), y=3, z=2)
-        timestamp = datetime.now()
+        timestamp = datetime.now(UTC)
         original = StoredDecision(
             coordinate=coord,
             content="Test decision",
@@ -83,7 +83,7 @@ class TestStoredDecisionSerialization:
             original = StoredDecision(
                 coordinate=coord,
                 content="Test content",
-                timestamp=datetime.now(),
+                timestamp=datetime.now(UTC),
                 agent_id="test-agent",
             )
 
@@ -111,7 +111,7 @@ class TestStoredDecisionSerialization:
             decision = StoredDecision(
                 coordinate=coord,
                 content="Test",
-                timestamp=datetime.now(),
+                timestamp=datetime.now(UTC),
                 agent_id="test",
             )
 
@@ -169,7 +169,7 @@ class TestMemoryLayer:
         existing = StoredDecision(
             coordinate=coord,
             content="Existing",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(UTC),
             agent_id="test",
         )
 
@@ -183,7 +183,7 @@ class TestMemoryLayer:
         existing = StoredDecision(
             coordinate=coord,
             content="Existing",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(UTC),
             agent_id="test",
         )
 

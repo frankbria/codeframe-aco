@@ -182,7 +182,7 @@ class TestSuccessCriteria:
 
         # Test query performance with 10k decisions
         start = time.perf_counter()
-        results = manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(999)))
+        manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(999)))
         query_time = time.perf_counter() - start
 
         print("\nSC-004 Results:")
@@ -369,23 +369,19 @@ class TestSuccessCriteria:
 
         # Simulate common context queries
         # 1. Get all architecture for current issue (1 lookup)
-        results1 = manager.query_range(
-            x_range=(mock_issue_id(10), mock_issue_id(10)), z_range=(1, 1)
-        )
+        manager.query_range(x_range=(mock_issue_id(10), mock_issue_id(10)), z_range=(1, 1))
         lookups1 = 1
 
         # 2. Get architecture decisions for issues 1-20 (1 lookup)
-        results2 = manager.query_range(
-            x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1)
-        )
+        manager.query_range(x_range=(mock_issue_id(1), mock_issue_id(20)), z_range=(1, 1))
         lookups2 = 1
 
         # 3. Get all decisions before issue 30 (1 lookup)
-        results3 = manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=5)
+        manager.query_partial_order(x_threshold=mock_issue_id(30), y_threshold=5)
         lookups3 = 1
 
         # 4. Search for specific content (1 lookup)
-        results4 = manager.search_content(["Decision"])
+        manager.search_content(["Decision"])
         lookups4 = 1
 
         # All common queries use ≤ 1 lookup due to efficient indexing
@@ -396,7 +392,7 @@ class TestSuccessCriteria:
         print(f"  Average lookups per query: {avg_lookups:.1f}")
         print("  All queries under 5 lookups: YES")
 
-        assert all(l <= 5 for l in all_lookups), "Some queries exceeded 5 lookups"
+        assert all(lookup <= 5 for lookup in all_lookups), "Some queries exceeded 5 lookups"
         assert avg_lookups < 5, f"Average lookups {avg_lookups} exceeds 5"
 
 
