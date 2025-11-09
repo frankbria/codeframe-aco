@@ -49,7 +49,7 @@ class TestDAGOrdering:
         }
 
         # Store decisions
-        for idx, issue_id in enumerate(issue_ids):
+        for _idx, issue_id in enumerate(issue_ids):
             coord = VectorCoordinate(x=issue_id, y=2, z=1)
             manager.store(coord, f"Decision for {issue_id}", issue_context={"issue_id": issue_id})
 
@@ -93,14 +93,15 @@ class TestDAGOrdering:
         }
 
         # Store decisions at different y positions
-        for idx, issue_id in enumerate(issue_ids):
+        for _idx, issue_id in enumerate(issue_ids):
             for y in [1, 2, 3]:
                 coord = VectorCoordinate(x=issue_id, y=y, z=1)
                 manager.store(coord, f"Decision {issue_id} y={y}")
 
         # Query partial order WITHOUT dag_order (lexicographic fallback)
         # (x,y) < ("issue-e05", 3) with lexicographic comparison
-        results_lex = manager.query_partial_order(x_threshold="issue-e05", y_threshold=3)
+        # Note: results_lex not used in this test, but demonstrates lexicographic ordering
+        _ = manager.query_partial_order(x_threshold="issue-e05", y_threshold=3)
 
         # Query partial order WITH dag_order (topological ordering)
         # (x,y) < ("issue-e05", 3) means position < 2, or (position == 2 and y < 3)

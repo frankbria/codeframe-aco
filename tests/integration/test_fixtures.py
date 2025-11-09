@@ -52,7 +52,7 @@ class TestFixtures:
         assert len(test_issues) > 0
 
         # Check that issue IDs are strings
-        for name, issue_id in test_issues.items():
+        for _name, issue_id in test_issues.items():
             assert isinstance(issue_id, str)
             assert len(issue_id) > 0
 

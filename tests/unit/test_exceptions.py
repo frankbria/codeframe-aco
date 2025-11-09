@@ -1,7 +1,6 @@
 """Unit tests for custom exception classes."""
 
 
-
 # Tests for T016: BeadsError base exception
 class TestBeadsError:
     """Test BeadsError base exception."""

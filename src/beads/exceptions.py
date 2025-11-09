@@ -5,7 +5,6 @@ error scenarios when interacting with the Beads CLI.
 """
 
 
-
 # T016: Base exception
 class BeadsError(Exception):
     """Base exception for all Beads operations.

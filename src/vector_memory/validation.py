@@ -182,10 +182,9 @@ class MemoryIndex:
                 x_less = x < x_threshold
                 x_equal = x == x_threshold
 
-            if x_less or (x_equal and y < y_threshold):
-                # Apply z filter if specified
-                if z_filter is None or z == z_filter:
-                    results.append(coord_tuple)
+            # Apply z filter if specified and coordinate meets partial order criteria
+            if (x_less or (x_equal and y < y_threshold)) and (z_filter is None or z == z_filter):
+                results.append(coord_tuple)
 
         return sorted(results)
 

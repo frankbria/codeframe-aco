@@ -1,7 +1,7 @@
 """Git persistence operations for vector memory."""
 
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -48,7 +48,7 @@ class GitPersistence:
         """
         # Generate default message if none provided
         if message is None:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             message = f"vector-memory: sync {decision_count} decision(s) at {timestamp}"
 
         # Get HEAD commit hash before attempting commit
