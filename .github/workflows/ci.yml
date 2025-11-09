@@ -51,10 +51,14 @@ jobs:
         continue-on-error: true  # Allow failures initially
 
       - name: Run unit tests
-        run: pytest tests/unit/ -v --cov=src/beads --cov-report=term --cov-report=xml
+        run: |
+          export BEADS_DIR="${GITHUB_WORKSPACE}/.beads"
+          pytest tests/unit/ -v --cov=src/beads --cov-report=term --cov-report=xml
 
       - name: Run integration tests
-        run: pytest tests/integration/ -v --timeout=60 --cov=src/beads --cov-append --cov-report=xml
+        run: |
+          export BEADS_DIR="${GITHUB_WORKSPACE}/.beads"
+          pytest tests/integration/ -v --timeout=60 --cov=src/beads --cov-append --cov-report=xml
         continue-on-error: true  # Integration tests may timeout
 
       - name: Upload coverage to Codecov
