@@ -424,3 +424,156 @@ class TestIssueFromJson:
 
         with pytest.raises(ValueError):
             Issue.from_json(json_data)
+
+
+# T095: Tests for Dependency dataclass
+class TestDependency:
+    """Test Dependency dataclass validation and behavior."""
+
+    def test_dependency_creation(self):
+        """Test creating a valid Dependency."""
+        from beads.models import Dependency, DependencyType
+
+        dep = Dependency(
+            blocked_id="issue-A",
+            blocker_id="issue-B",
+            dependency_type=DependencyType.BLOCKS
+        )
+
+        assert dep.blocked_id == "issue-A"
+        assert dep.blocker_id == "issue-B"
+        assert dep.dependency_type == DependencyType.BLOCKS
+
+    def test_dependency_all_types(self):
+        """Test Dependency with all dependency types."""
+        from beads.models import Dependency, DependencyType
+
+        for dep_type in DependencyType:
+            dep = Dependency(
+                blocked_id="issue-A",
+                blocker_id="issue-B",
+                dependency_type=dep_type
+            )
+            assert dep.dependency_type == dep_type
+
+    def test_dependency_self_dependency_raises_error(self):
+        """Test that self-dependencies raise ValueError."""
+        from beads.models import Dependency, DependencyType
+
+        with pytest.raises(ValueError, match="Issue cannot depend on itself"):
+            Dependency(
+                blocked_id="issue-A",
+                blocker_id="issue-A",
+                dependency_type=DependencyType.BLOCKS
+            )
+
+    def test_dependency_equality(self):
+        """Test Dependency equality comparison."""
+        from beads.models import Dependency, DependencyType
+
+        dep1 = Dependency("A", "B", DependencyType.BLOCKS)
+        dep2 = Dependency("A", "B", DependencyType.BLOCKS)
+        dep3 = Dependency("A", "C", DependencyType.BLOCKS)
+
+        assert dep1 == dep2
+        assert dep1 != dep3
+
+    def test_dependency_string_representation(self):
+        """Test Dependency string representation."""
+        from beads.models import Dependency, DependencyType
+
+        dep = Dependency("issue-A", "issue-B", DependencyType.BLOCKS)
+        str_repr = str(dep)
+
+        assert "issue-A" in str_repr
+        assert "issue-B" in str_repr
+
+
+# T096: Tests for DependencyTree dataclass
+class TestDependencyTree:
+    """Test DependencyTree dataclass validation and behavior."""
+
+    def test_dependency_tree_creation(self):
+        """Test creating a valid DependencyTree."""
+        from beads.models import DependencyTree
+
+        tree = DependencyTree(
+            issue_id="issue-A",
+            blockers=["issue-B", "issue-C"],
+            blocked_by=["issue-D", "issue-E"]
+        )
+
+        assert tree.issue_id == "issue-A"
+        assert tree.blockers == ["issue-B", "issue-C"]
+        assert tree.blocked_by == ["issue-D", "issue-E"]
+
+    def test_dependency_tree_empty_lists(self):
+        """Test DependencyTree with no dependencies."""
+        from beads.models import DependencyTree
+
+        tree = DependencyTree(
+            issue_id="issue-A",
+            blockers=[],
+            blocked_by=[]
+        )
+
+        assert tree.issue_id == "issue-A"
+        assert tree.blockers == []
+        assert tree.blocked_by == []
+        assert len(tree.blockers) == 0
+        assert len(tree.blocked_by) == 0
+
+    def test_dependency_tree_single_blocker(self):
+        """Test DependencyTree with single blocker."""
+        from beads.models import DependencyTree
+
+        tree = DependencyTree(
+            issue_id="issue-A",
+            blockers=["issue-B"],
+            blocked_by=[]
+        )
+
+        assert len(tree.blockers) == 1
+        assert tree.blockers[0] == "issue-B"
+        assert len(tree.blocked_by) == 0
+
+    def test_dependency_tree_single_blocked(self):
+        """Test DependencyTree with single blocked issue."""
+        from beads.models import DependencyTree
+
+        tree = DependencyTree(
+            issue_id="issue-A",
+            blockers=[],
+            blocked_by=["issue-C"]
+        )
+
+        assert len(tree.blockers) == 0
+        assert len(tree.blocked_by) == 1
+        assert tree.blocked_by[0] == "issue-C"
+
+    def test_dependency_tree_equality(self):
+        """Test DependencyTree equality comparison."""
+        from beads.models import DependencyTree
+
+        tree1 = DependencyTree("A", ["B"], ["C"])
+        tree2 = DependencyTree("A", ["B"], ["C"])
+        tree3 = DependencyTree("A", ["B"], ["D"])
+
+        assert tree1 == tree2
+        assert tree1 != tree3
+
+    def test_dependency_tree_from_json(self):
+        """Test DependencyTree creation from JSON data."""
+        from beads.models import DependencyTree
+
+        json_data = {
+            "issue_id": "issue-A",
+            "blockers": ["issue-B", "issue-C"],
+            "blocked_by": ["issue-D"]
+        }
+
+        tree = DependencyTree(**json_data)
+
+        assert tree.issue_id == "issue-A"
+        assert tree.blockers == ["issue-B", "issue-C"]
+        assert tree.blocked_by == ["issue-D"]

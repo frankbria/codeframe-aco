@@ -306,3 +306,172 @@ class TestStatusUpdatePerformance:
 
         # Should complete in < 100ms (0.1 seconds)
         assert duration < 0.1, f"Close issue took {duration*1000:.1f}ms (expected < 100ms)"
+
+
+# T082: Integration tests for create_issue()
+class TestIssueCreation:
+    """Integration tests for issue creation operations."""
+
+    def test_create_issue_persists_to_database(self, test_beads_db, monkeypatch):
+        """Test T083: Create issue with title, type, priority → appears in Beads."""
+        monkeypatch.chdir(test_beads_db)
+        client = BeadsClient(sandbox=True)
+
+        # Create a new issue
+        new_issue = client.create_issue(
+            title="Integration Test Issue",
+            description="This is a test issue created via Python API",
+            issue_type=IssueType.FEATURE,
+            priority=1
+        )
+
+        # Verify the issue was created
+        assert new_issue.id is not None
+        assert new_issue.title == "Integration Test Issue"
+        assert new_issue.description == "This is a test issue created via Python API"
+        assert new_issue.issue_type == IssueType.FEATURE
+        assert new_issue.priority == 1
+        assert new_issue.status == IssueStatus.OPEN
+
+        # Verify persistence by fetching the issue
+        fetched_issue = client.get_issue(new_issue.id)
+        assert fetched_issue.id == new_issue.id
+        assert fetched_issue.title == new_issue.title
+        assert fetched_issue.description == new_issue.description
+
+    def test_create_issue_with_all_optional_fields(self, test_beads_db, monkeypatch):
+        """Test T086: Create with description and assignee → fields persisted."""
+        monkeypatch.chdir(test_beads_db)
+        client = BeadsClient(sandbox=True)
+
+        # Create issue with all optional fields
+        new_issue = client.create_issue(
+            title="Fully Configured Issue",
+            description="Issue with all optional fields set",
+            issue_type=IssueType.BUG,
+            priority=0,
+            assignee="testuser",
+            labels=["urgent", "backend", "security"]
+        )
+
+        # Verify basic fields were set (note: bd create doesn't return labels in JSON)
+        assert new_issue.title == "Fully Configured Issue"
+        assert new_issue.description == "Issue with all optional fields set"
+        assert new_issue.issue_type == IssueType.BUG
+        assert new_issue.priority == 0
+        assert new_issue.assignee == "testuser"
+
+        # Verify persistence by fetching the issue (bd show returns full details including labels)
+        fetched_issue = client.get_issue(new_issue.id)
+        assert fetched_issue.assignee == "testuser"
+        assert set(fetched_issue.labels or []) == {"urgent", "backend", "security"}
+
+    def test_created_issue_appears_in_ready_list(self, test_beads_db, monkeypatch):
+        """Test T093: Verify created issues appear in subsequent queries."""
+        monkeypatch.chdir(test_beads_db)
+        client = BeadsClient(sandbox=True)
+
+        # Create a new issue
+        new_issue = client.create_issue(
+            title="Ready Issue Test",
+            description="Should appear in ready list",
+            issue_type=IssueType.TASK,
+            priority=2
+        )
+
+        # Verify it appears in ready issues
+        ready_issues = client.get_ready_issues()
+        ready_ids = {issue.id for issue in ready_issues}
+
+        assert new_issue.id in ready_ids, f"Newly created issue {new_issue.id} should appear in ready list"
+
+    def test_created_issue_appears_in_list_queries(self, test_beads_db, monkeypatch):
+        """Test that created issues appear in various list queries."""
+        monkeypatch.chdir(test_beads_db)
+        client = BeadsClient(sandbox=True)
+
+        # Create a bug with priority 0
+        new_bug = client.create_issue(
+            title="Critical Bug",
+            description="High priority bug",
+            issue_type=IssueType.BUG,
+            priority=0
+        )
+
+        # Verify it appears in list queries
+        all_bugs = client.list_issues(issue_type=IssueType.BUG)
+        bug_ids = {issue.id for issue in all_bugs}
+        assert new_bug.id in bug_ids
+
+        critical_issues = client.list_issues(priority=0)
+        critical_ids = {issue.id for issue in critical_issues}
+        assert new_bug.id in critical_ids
+
+        open_issues = client.list_issues(status=IssueStatus.OPEN)
+        open_ids = {issue.id for issue in open_issues}
+        assert new_bug.id in open_ids
+
+    def test_create_multiple_issues_sequentially(self, test_beads_db, monkeypatch):
+        """Test creating multiple issues in sequence."""
+        monkeypatch.chdir(test_beads_db)
+        client = BeadsClient(sandbox=True)
+
+        # Create two issues (reduced from 3 to avoid timeout)
+        issue1 = client.create_issue(
+            title="Issue 1",
+            description="First issue",
+            issue_type=IssueType.FEATURE,
+            priority=1
+        )
+
+        issue2 = client.create_issue(
+            title="Issue 2",
+            description="Second issue",
+            issue_type=IssueType.BUG,
+            priority=0
+        )
+
+        # Verify both issues were created with unique IDs
+        assert issue1.id != issue2.id
+
+        # Verify both can be fetched
+        fetched1 = client.get_issue(issue1.id)
+        fetched2 = client.get_issue(issue2.id)
+
+        assert fetched1.title == "Issue 1"
+        assert fetched2.title == "Issue 2"
+
+    def test_create_issue_verifies_via_bd_cli(self, test_beads_db, monkeypatch):
+        """Test that created issues are visible via direct bd CLI query."""
+        monkeypatch.chdir(test_beads_db)
+        client = BeadsClient(sandbox=True)
+
+        # Create an issue via Python API
+        new_issue = client.create_issue(
+            title="CLI Verification Test",
+            description="Should be visible via bd CLI",
+            issue_type=IssueType.TASK,
+            priority=3
+        )
+
+        # Verify via direct bd CLI call
+        result = subprocess.run(
+            ['bd', '--json', 'show', new_issue.id],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        import json
+        cli_result = json.loads(result.stdout)
+
+        # bd show returns a list with one element
+        if isinstance(cli_result, list):
+            issue_data = cli_result[0]
+        else:
+            issue_data = cli_result
+
+        assert issue_data['id'] == new_issue.id
+        assert issue_data['title'] == "CLI Verification Test"
+        assert issue_data['issue_type'] == 'task'
+        assert issue_data['priority'] == 3

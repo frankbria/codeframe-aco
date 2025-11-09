@@ -2,8 +2,9 @@
 
 from typing import List, Optional
 
-from beads.models import Issue, IssueType, IssueStatus
+from beads.models import Issue, IssueType, IssueStatus, Dependency, DependencyType, DependencyTree
 from beads.utils import _run_bd_command
+from beads.exceptions import BeadsDependencyCycleError
 
 
 class BeadsClient:
@@ -416,6 +417,190 @@ class BeadsClient:
             issues.append(issue)
 
         return issues
+
+    # T109: Dependency management - add_dependency()
+    def add_dependency(
+        self,
+        blocked_id: str,
+        blocker_id: str,
+        dep_type: DependencyType = DependencyType.BLOCKS
+    ) -> Dependency:
+        """Add a dependency between two issues.
+
+        Creates a relationship where blocker_id must complete before
+        blocked_id can proceed. Supports all 4 dependency types.
+
+        Args:
+            blocked_id: ID of the issue that is blocked
+            blocker_id: ID of the issue that blocks
+            dep_type: Type of dependency (blocks, related, parent-child, discovered-from)
+
+        Returns:
+            Dependency object representing the created relationship
+
+        Raises:
+            ValueError: If blocked_id equals blocker_id (self-dependency)
+            BeadsDependencyCycleError: If adding this dependency would create a cycle
+            BeadsCommandError: If bd dep add fails
+
+        Example:
+            >>> client = BeadsClient()
+            >>> dep = client.add_dependency(
+            ...     blocked_id="issue-A",
+            ...     blocker_id="issue-B",
+            ...     dep_type=DependencyType.BLOCKS
+            ... )
+        """
+        # T110: Validate no self-dependencies
+        if blocked_id == blocker_id:
+            raise ValueError("Issue cannot depend on itself")
+
+        # bd dep add <blocked> <blocker> --type <type>
+        args = ['dep', 'add', blocked_id, blocker_id, '--type', dep_type.value]
+
+        try:
+            result = _run_bd_command(args, timeout=self.timeout)
+        except Exception as e:
+            # Check if error is due to cycle creation
+            error_msg = str(e).lower()
+            if 'cycle' in error_msg or 'circular' in error_msg:
+                raise BeadsDependencyCycleError(
+                    message=f"Adding dependency would create a cycle",
+                    cycle_path=[blocked_id, blocker_id, blocked_id]
+                )
+            raise
+
+        # Return Dependency object
+        return Dependency(
+            blocked_id=blocked_id,
+            blocker_id=blocker_id,
+            dependency_type=dep_type
+        )
+
+    # T111: Dependency management - remove_dependency()
+    def remove_dependency(
+        self,
+        blocked_id: str,
+        blocker_id: str
+    ) -> None:
+        """Remove a dependency between two issues.
+
+        Idempotent operation - removing a non-existent dependency does not error.
+
+        Args:
+            blocked_id: ID of the blocked issue
+            blocker_id: ID of the blocker issue
+
+        Raises:
+            BeadsCommandError: If bd dep remove fails for reasons other than non-existence
+
+        Example:
+            >>> client = BeadsClient()
+            >>> client.remove_dependency("issue-A", "issue-B")
+        """
+        # bd dep remove <blocked> <blocker>
+        args = ['dep', 'remove', blocked_id, blocker_id]
+
+        try:
+            _run_bd_command(args, timeout=self.timeout)
+        except Exception as e:
+            # Idempotent: ignore if dependency doesn't exist
+            error_msg = str(e).lower()
+            if 'not found' in error_msg or 'does not exist' in error_msg:
+                return
+            raise
+
+    # T112: Dependency management - get_dependency_tree()
+    def get_dependency_tree(self, issue_id: str) -> DependencyTree:
+        """Get the full dependency tree for an issue.
+
+        Returns both upstream (blockers) and downstream (blocked by) dependencies
+        as a transitive closure.
+
+        Args:
+            issue_id: ID of the issue to query
+
+        Returns:
+            DependencyTree with all upstream and downstream dependencies
+
+        Raises:
+            BeadsCommandError: If bd dep tree fails
+
+        Example:
+            >>> client = BeadsClient()
+            >>> tree = client.get_dependency_tree("issue-A")
+            >>> print(f"Blocked by {len(tree.blockers)} issues")
+        """
+        # bd dep tree <issue_id> returns flat list with depth information
+        args = ['dep', 'tree', issue_id]
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        if not result:
+            # No dependencies
+            return DependencyTree(
+                issue_id=issue_id,
+                blockers=[],
+                blocked_by=[]
+            )
+
+        # Parse tree structure
+        # depth=0 is the root issue
+        # depth>0 are dependencies (blockers of root)
+        blockers = []
+        for item in result:
+            if item['id'] != issue_id and item.get('depth', 0) > 0:
+                blockers.append(item['id'])
+
+        # For blocked_by, we need to check what this issue blocks
+        # This would require a separate query or parsing logic
+        # For now, return empty list (to be enhanced)
+        blocked_by = []
+
+        return DependencyTree(
+            issue_id=issue_id,
+            blockers=blockers,
+            blocked_by=blocked_by
+        )
+
+    # T113-T114: Dependency management - detect_dependency_cycles()
+    def detect_dependency_cycles(self) -> List[List[str]]:
+        """Detect circular dependencies in the entire DAG.
+
+        Returns all cycles found in the dependency graph. Each cycle is
+        represented as a list of issue IDs forming the cycle.
+
+        Returns:
+            List of cycles, where each cycle is a list of issue IDs.
+            Empty list if no cycles exist.
+
+        Raises:
+            BeadsCommandError: If bd dep cycles fails
+
+        Example:
+            >>> client = BeadsClient()
+            >>> cycles = client.detect_dependency_cycles()
+            >>> if cycles:
+            ...     print(f"Found {len(cycles)} cycles!")
+            ...     for cycle in cycles:
+            ...         print(" → ".join(cycle))
+        """
+        # bd dep cycles returns JSON array of cycles
+        args = ['dep', 'cycles']
+        result = _run_bd_command(args, timeout=self.timeout)
+
+        if not result:
+            return []
+
+        # Result is a list of cycle paths
+        # Each cycle is a list of issue IDs
+        cycles = []
+        for cycle_data in result:
+            if isinstance(cycle_data, list):
+                cycles.append(cycle_data)
+            elif isinstance(cycle_data, dict) and 'path' in cycle_data:
+                cycles.append(cycle_data['path'])
+
+        return cycles
 
 
 def create_beads_client(

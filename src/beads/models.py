@@ -178,7 +178,74 @@ class Issue:
             created_at=created_at,
             updated_at=updated_at,
             content_hash=data['content_hash'],
-            source_repo=data['source_repo'],
+            source_repo=data.get('source_repo', '.'),
             assignee=data.get('assignee'),
             labels=data.get('labels', [])
         )
+
+
+# T097: Dependency dataclass
+@dataclass
+class Dependency:
+    """Represents a relationship between two issues in the DAG.
+    
+    A dependency connects two issues where one (blocker) must be resolved
+    before the other (blocked) can proceed.
+    
+    Attributes:
+        blocked_id: ID of the issue that is blocked
+        blocker_id: ID of the issue that blocks
+        dependency_type: Nature of the relationship (blocks, related, etc.)
+    
+    Business Rules:
+        - blocked_id and blocker_id must be different (no self-dependencies)
+        - Dependencies persist even if issues are closed
+    
+    Example:
+        >>> dep = Dependency(
+        ...     blocked_id="issue-A",
+        ...     blocker_id="issue-B",
+        ...     dependency_type=DependencyType.BLOCKS
+        ... )
+    """
+    
+    blocked_id: str
+    blocker_id: str
+    dependency_type: DependencyType
+    
+    def __post_init__(self):
+        """Validate dependency after initialization."""
+        if self.blocked_id == self.blocker_id:
+            raise ValueError("Issue cannot depend on itself")
+
+
+# T098: DependencyTree dataclass
+@dataclass
+class DependencyTree:
+    """Represents the full upstream and downstream dependency graph for an issue.
+    
+    Contains the transitive closure of all dependencies - both issues that
+    block this one (upstream) and issues that this one blocks (downstream).
+    
+    Attributes:
+        issue_id: Root issue for tree query
+        blockers: Issues that block this issue (upstream dependencies)
+        blocked_by: Issues blocked by this issue (downstream dependencies)
+    
+    Business Rules:
+        - Tree query returns transitive closure (all ancestors and descendants)
+        - Empty lists if no dependencies exist
+        - Includes all dependency types (not filtered)
+    
+    Example:
+        >>> tree = DependencyTree(
+        ...     issue_id="issue-A",
+        ...     blockers=["issue-B", "issue-C"],
+        ...     blocked_by=["issue-D", "issue-E"]
+        ... )
+        >>> print(f"Issue {tree.issue_id} is blocked by {len(tree.blockers)} issues")
+    """
+    
+    issue_id: str
+    blockers: List[str]
+    blocked_by: List[str]

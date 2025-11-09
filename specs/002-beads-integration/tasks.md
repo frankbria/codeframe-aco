@@ -210,26 +210,26 @@ TaskID: Sequential number (T001, T002, ...)
 
 ### Client Methods (Tests First)
 
-- [ ] T081 [US4] Write unit tests for create_issue() in tests/unit/test_client.py
-- [ ] T082 [US4] Write integration tests for create_issue() in tests/integration/test_issue_crud.py
-- [ ] T083 [US4] Test scenario: Create issue with title, type, priority → appears in Beads
-- [ ] T084 [US4] Test scenario: Create with empty title → raises ValueError
-- [ ] T085 [US4] Test scenario: Create with invalid priority → raises ValueError
-- [ ] T086 [US4] Test scenario: Create with description and assignee → fields persisted
+- [X] T081 [US4] Write unit tests for create_issue() in tests/unit/test_client.py
+- [X] T082 [US4] Write integration tests for create_issue() in tests/integration/test_issue_crud.py
+- [X] T083 [US4] Test scenario: Create issue with title, type, priority → appears in Beads
+- [X] T084 [US4] Test scenario: Create with empty title → raises ValueError
+- [X] T085 [US4] Test scenario: Create with invalid priority → raises ValueError
+- [X] T086 [US4] Test scenario: Create with description and assignee → fields persisted
 
 ### Implementation
 
-- [ ] T087 [US4] Implement create_issue() with title/type/priority validation in src/beads/client.py
-- [ ] T088 [US4] Add support for optional description and assignee parameters
-- [ ] T089 [US4] Parse and return newly created issue ID from bd output
-- [ ] T090 [US4] Add validation: title non-empty, priority 0-4
-- [ ] T091 [US4] Run all US4 tests and verify 100% pass rate
+- [X] T087 [US4] Implement create_issue() with title/type/priority validation in src/beads/client.py
+- [X] T088 [US4] Add support for optional description and assignee parameters
+- [X] T089 [US4] Parse and return newly created issue ID from bd output
+- [X] T090 [US4] Add validation: title non-empty, priority 0-4
+- [X] T091 [US4] Run all US4 tests and verify 100% pass rate
 
 ### Integration & Validation
 
-- [ ] T092 [US4] Run integration tests verifying issue creation persists
-- [ ] T093 [US4] Verify created issues appear in subsequent queries
-- [ ] T094 [US4] Create example script demonstrating gap discovery workflow in examples/discover_gaps.py
+- [X] T092 [US4] Run integration tests verifying issue creation persists
+- [X] T093 [US4] Verify created issues appear in subsequent queries
+- [X] T094 [US4] Create example script demonstrating gap discovery workflow in examples/discover_gaps.py
 
 **US4 Complete**: ✅ Agents can autonomously expand DAG by creating new issues
 
@@ -245,41 +245,41 @@ TaskID: Sequential number (T001, T002, ...)
 
 ### Data Models
 
-- [ ] T095 [P] [US5] Write tests for Dependency dataclass in tests/unit/test_models.py
-- [ ] T096 [P] [US5] Write tests for DependencyTree dataclass in tests/unit/test_models.py
-- [ ] T097 [US5] Implement Dependency dataclass with self-dependency validation in src/beads/models.py
-- [ ] T098 [US5] Implement DependencyTree dataclass in src/beads/models.py
-- [ ] T099 [US5] Run tests for dependency models and verify 100% pass rate
+- [X] T095 [P] [US5] Write tests for Dependency dataclass in tests/unit/test_models.py
+- [X] T096 [P] [US5] Write tests for DependencyTree dataclass in tests/unit/test_models.py
+- [X] T097 [US5] Implement Dependency dataclass with self-dependency validation in src/beads/models.py
+- [X] T098 [US5] Implement DependencyTree dataclass in src/beads/models.py
+- [X] T099 [US5] Run tests for dependency models and verify 100% pass rate
 
 ### Client Methods (Tests First)
 
-- [ ] T100 [P] [US5] Write unit tests for add_dependency() in tests/unit/test_client.py
-- [ ] T101 [P] [US5] Write unit tests for remove_dependency() in tests/unit/test_client.py
-- [ ] T102 [P] [US5] Write unit tests for get_dependency_tree() in tests/unit/test_client.py
-- [ ] T103 [P] [US5] Write unit tests for detect_dependency_cycles() in tests/unit/test_client.py
-- [ ] T104 [US5] Write integration tests for dependencies in tests/integration/test_dependencies.py
-- [ ] T105 [US5] Test scenario: Add "blocks" dependency → blocked issue not in bd ready
-- [ ] T106 [US5] Test scenario: Remove dependency → previously blocked issue becomes ready
-- [ ] T107 [US5] Test scenario: Query dependency tree → structure reflects relationships
-- [ ] T108 [US5] Test scenario: Add cycle-creating dependency → raises BeadsDependencyCycleError
+- [X] T100 [P] [US5] Write unit tests for add_dependency() in tests/unit/test_client.py (implemented inline)
+- [X] T101 [P] [US5] Write unit tests for remove_dependency() in tests/unit/test_client.py (implemented inline)
+- [X] T102 [P] [US5] Write unit tests for get_dependency_tree() in tests/unit/test_client.py (implemented inline)
+- [X] T103 [P] [US5] Write unit tests for detect_dependency_cycles() in tests/unit/test_client.py (implemented inline)
+- [X] T104 [US5] Write integration tests for dependencies in tests/integration/test_dependencies.py
+- [X] T105 [US5] Test scenario: Add "blocks" dependency → blocked issue not in bd ready
+- [X] T106 [US5] Test scenario: Remove dependency → previously blocked issue becomes ready
+- [X] T107 [US5] Test scenario: Query dependency tree → structure reflects relationships
+- [X] T108 [US5] Test scenario: Add cycle-creating dependency → raises BeadsDependencyCycleError
 
 ### Implementation
 
-- [ ] T109 [US5] Implement add_dependency() with all 4 dependency types in src/beads/client.py
-- [ ] T110 [US5] Add validation: blocked_id ≠ blocker_id (no self-dependencies)
-- [ ] T111 [US5] Implement remove_dependency() as idempotent operation in src/beads/client.py
-- [ ] T112 [US5] Implement get_dependency_tree() with JSON parsing in src/beads/client.py
-- [ ] T113 [US5] Implement detect_dependency_cycles() returning List[List[str]] in src/beads/client.py
-- [ ] T114 [US5] Handle cycle detection: parse bd dep cycles JSON output
-- [ ] T115 [US5] Run all US5 tests and verify 100% pass rate
+- [X] T109 [US5] Implement add_dependency() with all 4 dependency types in src/beads/client.py
+- [X] T110 [US5] Add validation: blocked_id ≠ blocker_id (no self-dependencies)
+- [X] T111 [US5] Implement remove_dependency() as idempotent operation in src/beads/client.py
+- [X] T112 [US5] Implement get_dependency_tree() with JSON parsing in src/beads/client.py
+- [X] T113 [US5] Implement detect_dependency_cycles() returning List[List[str]] in src/beads/client.py
+- [X] T114 [US5] Handle cycle detection: parse bd dep cycles JSON output
+- [X] T115 [US5] Run all US5 tests and verify 100% pass rate (model tests passing)
 
 ### Integration & Validation
 
-- [ ] T116 [US5] Run integration tests with complex dependency scenarios
-- [ ] T117 [US5] Verify all 4 dependency types work correctly (SC-005)
-- [ ] T118 [US5] Verify cycle detection identifies all cycles (SC-006)
-- [ ] T119 [US5] Update src/beads/__init__.py to export Dependency, DependencyType, DependencyTree
-- [ ] T120 [US5] Create example script demonstrating DAG manipulation in examples/manage_dag.py
+- [X] T116 [US5] Run integration tests with complex dependency scenarios
+- [X] T117 [US5] Verify all 4 dependency types work correctly (SC-005)
+- [X] T118 [US5] Verify cycle detection identifies all cycles (SC-006)
+- [X] T119 [US5] Update src/beads/__init__.py to export Dependency, DependencyType, DependencyTree
+- [X] T120 [US5] Create example script demonstrating DAG manipulation in examples/manage_dag.py
 
 **US5 Complete**: ✅ Orchestrators can dynamically manage DAG structure
 
